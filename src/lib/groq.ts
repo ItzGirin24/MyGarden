@@ -1,23 +1,26 @@
 export const getAIResponse = async (message: string): Promise<string> => {
   try {
-    // Use a more advanced free AI API - Hugging Face with a better model
-    const response = await fetch('https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: message,
-        parameters: {
-          max_length: 150,
-          temperature: 0.8,
-          do_sample: true,
-          top_p: 0.9,
-          num_return_sequences: 1
-        },
-        options: {
-          wait_for_model: true
-        }
+        model: 'llama3-8b-8192',
+        messages: [
+          {
+            role: 'system',
+            content: `You are MyGardenAssisten, a professional AI assistant specializing in agriculture and gardening. Respond in Indonesian with professional, structured, and interactive language. Use emojis appropriately, format information with bullet points, numbered lists, and bold text for clarity. Provide practical, evidence-based advice. Structure responses with clear sections when appropriate. Be helpful, accurate, and engaging.`
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+        top_p: 0.9
       })
     });
 
@@ -27,29 +30,13 @@ export const getAIResponse = async (message: string): Promise<string> => {
 
     const data = await response.json();
 
-    // Extract the generated text
-    if (data && Array.isArray(data) && data[0]?.generated_text) {
-      let response = data[0].generated_text;
-
-      // Clean up the response to make it more agricultural-focused
-      response = response.replace(/^(bot|assistant|ai)[:\s]*/i, '');
-      response = response.trim();
-
-      // Add agricultural context if the response seems generic
-      if (!response.toLowerCase().includes('pertanian') &&
-          !response.toLowerCase().includes('tanam') &&
-          !response.toLowerCase().includes('panen') &&
-          !response.toLowerCase().includes('harga') &&
-          !response.toLowerCase().includes('cuaca')) {
-        response += " Untuk saran pertanian yang lebih spesifik, silakan tanyakan tentang tanaman tertentu atau praktik budidaya.";
-      }
-
-      return response;
+    if (data.choices && data.choices[0]?.message?.content) {
+      return data.choices[0].message.content.trim();
     }
 
     return "Maaf, saya tidak dapat memproses pertanyaan Anda saat ini. Silakan coba lagi.";
   } catch (error) {
-    console.error('Error calling AI API:', error);
+    console.error('Error calling Groq API:', error);
 
     // Enhanced rule-based responses with more intelligence
     const lowerMessage = message.toLowerCase();
@@ -85,6 +72,6 @@ export const getAIResponse = async (message: string): Promise<string> => {
     }
 
     // General agricultural assistant response
-    return "Halo! Saya Tani Cerdas, asisten AI pertanian Anda. Saya dapat membantu dengan berbagai topik pertanian seperti:\n\n🌾 **Budidaya Tanaman:**\n- Waktu tanam optimal\n- Teknik penanaman\n- Perawatan tanaman\n\n🐛 **Pengendalian Hama & Penyakit:**\n- Identifikasi hama\n- Metode pengendalian\n- Pencegahan\n\n💰 **Informasi Pasar:**\n- Harga komoditas\n- Tren pasar\n- Strategi pemasaran\n\n🌦️ **Cuaca & Iklim:**\n- Prakiraan cuaca\n- Dampak perubahan iklim\n- Adaptasi cuaca\n\n🌱 **Pupuk & Irigasi:**\n- Jenis dan dosis pupuk\n- Sistem irigasi\n- Konservasi air\n\nSilakan ajukan pertanyaan spesifik tentang pertanian, dan saya akan berikan saran yang praktis dan berdasarkan praktik pertanian modern di Indonesia!";
+    return "**MyGardenAssisten - Asisten AI Pertanian Profesional**\n\nSelamat datang! Saya siap membantu Anda dengan berbagai aspek pertanian dan berkebun.\n\n🌾 **Layanan yang Tersedia:**\n\n**Budidaya Tanaman:**\n• Waktu tanam optimal berdasarkan musim\n• Teknik penanaman yang efisien\n• Perawatan tanaman komprehensif\n\n**Pengendalian Hama & Penyakit:**\n• Identifikasi hama penyakit yang akurat\n• Strategi pengendalian terintegrasi\n• Metode pencegahan efektif\n\n**Informasi Pasar:**\n• Analisis harga komoditas terkini\n• Tren pasar dan proyeksi\n• Strategi pemasaran optimal\n\n**Cuaca & Iklim:**\n• Prakiraan cuaca terkini\n• Dampak perubahan iklim\n• Rekomendasi adaptasi\n\n**Pupuk & Irigasi:**\n• Panduan pemupukan berimbang\n• Sistem irigasi efisien\n• Konservasi sumber daya air\n\nSilakan ajukan pertanyaan spesifik tentang pertanian, dan saya akan berikan rekomendasi praktis berdasarkan praktik pertanian modern dan berkelanjutan.";
   }
 };
