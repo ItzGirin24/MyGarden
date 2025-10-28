@@ -186,11 +186,11 @@ const WeatherForecast = () => {
       setCurrentWeather(prev => ({
         ...prev,
         location: "Error mengambil data cuaca. Menggunakan data default.",
-        temperature: "28°C",
-        condition: "Cerah",
-        humidity: "65%",
-        windSpeed: "12 km/h",
-        rainChance: "10%"
+        temperature: "--°C",
+        condition: "--",
+        humidity: "--%",
+        windSpeed: "--/h",
+        rainChance: "--%"
       }));
     } finally {
       setIsLoading(false);
