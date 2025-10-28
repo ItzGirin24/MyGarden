@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, Send, User } from "lucide-react";
-import { useState } from "react";
+import { Bot, Send, User, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { getAIResponse } from "@/lib/groq";
 
 const AIChat = () => {
   const [messages, setMessages] = useState([
@@ -14,6 +17,81 @@ const AIChat = () => {
     }
   ]);
   const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const scrollAreaRef = useRef(null);
+
+  // Load chat history on mount
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
+
+  const loadChatHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setMessages(data.map(msg => ({ role: msg.role, content: msg.content })));
+        } else {
+          // Default welcome message
+          setMessages([{
+            role: "assistant",
+            content: "Selamat datang di Tani Cerdas! 🌾 Saya asisten AI Anda yang siap membantu dengan pertanyaan seputar pertanian. Silakan tanyakan tentang harga pasar, prakiraan cuaca, tips bercocok tanam, atau apa saja!"
+          }]);
+        }
+      } else {
+        // Default welcome message for unauthenticated users
+        setMessages([{
+          role: "assistant",
+          content: "Selamat datang di Tani Cerdas! 🌾 Saya asisten AI Anda yang siap membantu dengan pertanyaan seputar pertanian. Silakan tanyakan tentang harga pasar, prakiraan cuaca, tips bercocok tanam, atau apa saja!"
+        }]);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat history",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveMessage = async (role: string, content: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from('chat_messages')
+          .insert({
+            role,
+            content,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
 
   const exampleQuestions = [
     "Kapan waktu tanam jagung yang ideal di Bogor?",
@@ -22,27 +100,56 @@ const AIChat = () => {
     "Jelaskan strategi diversifikasi 4 komoditas"
   ];
 
-  const handleSend = () => {
-    if (!inputMessage.trim()) return;
+
+
+  const handleSend = async () => {
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage = inputMessage.trim();
+    setInputMessage("");
+    setIsLoading(true);
 
     // Add user message
     const newMessages = [
       ...messages,
-      { role: "user", content: inputMessage }
+      { role: "user", content: userMessage }
     ];
     setMessages(newMessages);
-    setInputMessage("");
 
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages([
+    // Save user message
+    await saveMessage("user", userMessage);
+
+    try {
+      const aiResponse = await getAIResponse(userMessage);
+
+      // Add AI response
+      const messagesWithAI = [
         ...newMessages,
-        {
-          role: "assistant",
-          content: "Terima kasih atas pertanyaan Anda! Untuk mengaktifkan fitur AI chat yang lengkap, aplikasi perlu terhubung ke Lovable Cloud. Fitur ini akan segera tersedia dan akan memberikan rekomendasi pertanian yang personal berdasarkan data real-time harga, cuaca, dan best practices dari petani sukses."
-        }
-      ]);
-    }, 1000);
+        { role: "assistant", content: aiResponse }
+      ];
+      setMessages(messagesWithAI);
+
+      // Save AI response
+      await saveMessage("assistant", aiResponse);
+
+    } catch (error) {
+      console.error('Error processing message:', error);
+      const errorMessage = "Maaf, terjadi kesalahan saat memproses pertanyaan Anda. Pastikan API key Groq sudah dikonfigurasi dengan benar.";
+
+      const messagesWithError = [
+        ...newMessages,
+        { role: "assistant", content: errorMessage }
+      ];
+      setMessages(messagesWithError);
+
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please check your Groq API key configuration.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,7 +179,7 @@ const AIChat = () => {
             </CardHeader>
             
             <CardContent className="p-0">
-              <ScrollArea className="h-[400px] p-6">
+              <ScrollArea ref={scrollAreaRef} className="h-[400px] p-6">
                 <div className="space-y-4">
                   {messages.map((message, index) => (
                     <div
@@ -138,9 +245,14 @@ const AIChat = () => {
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSend()}
                     className="flex-1"
+                    disabled={isLoading}
                   />
-                  <Button onClick={handleSend} size="icon">
-                    <Send className="w-4 h-4" />
+                  <Button onClick={handleSend} size="icon" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import { Sprout } from "lucide-react";
+import MyGardenLogo from "/MyGardenLogo.webp";
 
 const Footer = () => {
   return (
@@ -8,9 +9,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="bg-primary p-2 rounded-lg">
-                <Sprout className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img src={MyGardenLogo} alt="MyGarden Logo" className="w-8 h-8" />
               <span className="font-bold text-xl text-foreground">MyGarden</span>
             </div>
             <p className="text-sm text-muted-foreground">

@@ -1,16 +1,18 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import Auth from "./Auth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
 
   const navItems = [
-    { label: "Beranda", href: "#hero" },
-    { label: "Harga Pasar", href: "#market" },
-    { label: "Cuaca", href: "#weather" },
-    { label: "Berita", href: "#news" },
-    { label: "Chat AI", href: "#chat" },
+    { label: "Beranda", href: "/" },
+    { label: "Harga Pasar", href: "/market" },
+    { label: "Cuaca", href: "/weather" },
+    { label: "Berita", href: "/news" },
+    { label: "Chat AI", href: "/chat" },
   ];
 
   return (
@@ -30,13 +32,18 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
-                className="text-foreground hover:text-primary transition-colors font-medium"
+                to={item.href}
+                className={`font-medium transition-colors ${
+                  location.pathname === item.href
+                    ? "text-primary"
+                    : "text-foreground hover:text-primary"
+                }`}
+                onClick={() => setIsOpen(false)}
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
             <Auth />
           </div>
@@ -45,6 +52,7 @@ const Navigation = () => {
           <button
             className="md:hidden p-2"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
           >
             {isOpen ? (
               <X className="w-6 h-6 text-foreground" />
@@ -59,14 +67,18 @@ const Navigation = () => {
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
-                  className="text-foreground hover:text-primary transition-colors font-medium"
+                  to={item.href}
+                  className={`font-medium transition-colors ${
+                    location.pathname === item.href
+                      ? "text-primary"
+                      : "text-foreground hover:text-primary"
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
               <Auth />
             </div>

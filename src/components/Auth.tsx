@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
@@ -9,9 +9,12 @@ const Auth = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Listen to authentication state changes
-  onAuthStateChanged(auth, (currentUser) => {
-    setUser(currentUser);
-  });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
