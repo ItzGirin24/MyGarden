@@ -11,10 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 interface AnalysisResult {
   commodity: string;
   confidence: number;
+  estimatedWeight?: {
+    amount: number;
+    unit: string;
+    confidence: number;
+  };
   estimatedPrice: {
     buy: number;
     sell: number;
     unit: string;
+  };
+  totalPrice?: {
+    buy: number;
+    sell: number;
   };
   marketAverage?: number;
   priceRange: {
@@ -257,10 +266,23 @@ const PhotoPriceChecker = () => {
               </Badge>
             </div>
 
+            {/* Weight Estimation */}
+            {analysisResult.estimatedWeight && (
+              <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <h4 className="font-medium text-purple-800 dark:text-purple-200 mb-2">Estimasi Berat</h4>
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                  {analysisResult.estimatedWeight.amount} {analysisResult.estimatedWeight.unit}
+                </div>
+                <Badge variant={analysisResult.estimatedWeight.confidence > 0.7 ? "default" : "secondary"} className="mt-2">
+                  Confidence Berat: {Math.round(analysisResult.estimatedWeight.confidence * 100)}%
+                </Badge>
+              </div>
+            )}
+
             {/* Price Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <h4 className="font-medium">Harga AI</h4>
+                <h4 className="font-medium">Harga per {analysisResult.estimatedPrice.unit}</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                     <span className="text-sm">Harga Beli</span>
@@ -297,6 +319,27 @@ const PhotoPriceChecker = () => {
                 </div>
               </div>
             </div>
+
+            {/* Total Price if weight is estimated */}
+            {analysisResult.totalPrice && analysisResult.estimatedWeight && (
+              <div className="space-y-3">
+                <h4 className="font-medium">Total Harga untuk {analysisResult.estimatedWeight.amount} {analysisResult.estimatedWeight.unit}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex justify-between items-center p-3 bg-green-100 dark:bg-green-950/30 rounded-lg border-2 border-green-200 dark:border-green-800">
+                    <span className="text-sm font-medium">Total Harga Beli</span>
+                    <span className="font-bold text-green-800 dark:text-green-200 text-lg">
+                      Rp {analysisResult.totalPrice.buy.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-blue-100 dark:bg-blue-950/30 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+                    <span className="text-sm font-medium">Total Harga Jual</span>
+                    <span className="font-bold text-blue-800 dark:text-blue-200 text-lg">
+                      Rp {analysisResult.totalPrice.sell.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Recommendations */}
             <div className="bg-muted/50 p-4 rounded-lg">
