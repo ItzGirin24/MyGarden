@@ -77,20 +77,23 @@ const WeatherForecast = () => {
     // Rate limiting: max 60 calls per minute (OpenWeatherMap free tier limit)
     const now = Date.now();
     const timeSinceLastCall = now - lastApiCall;
-    const callsInLastMinute = apiCallCount;
-
-    if (callsInLastMinute >= 60 && timeSinceLastCall < 60000) {
-      console.log('Rate limit reached, using cached data or skipping update');
-      setIsLoading(false);
-      return;
-    }
 
     // Reset counter if more than a minute has passed
     if (timeSinceLastCall > 60000) {
       setApiCallCount(0);
     }
 
-    setApiCallCount(prev => prev + 1);
+    // Check if we're approaching the limit (leave buffer for multiple calls)
+    if (apiCallCount >= 55) {
+      console.log('Rate limit approaching, will retry later');
+      setCurrentWeather(prev => ({
+        ...prev,
+        location: "Batas API hampir tercapai. Coba lagi dalam 1 menit."
+      }));
+      setIsLoading(false);
+      return;
+    }
+
     setLastApiCall(now);
     setIsLoading(true);
 
@@ -99,6 +102,7 @@ const WeatherForecast = () => {
       const API_KEY = 'bd5e378503939ddaee76f12ad7a97608'; // Free API key
 
       // Get current weather with more details
+      setApiCallCount(prev => prev + 1);
       const response = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`
       );
@@ -117,23 +121,35 @@ const WeatherForecast = () => {
 
       const data = await response.json();
 
-      // Get 5-day forecast for better accuracy (only if we haven't exceeded rate limit)
+      // Get 5-day forecast for better accuracy (only if we have calls remaining)
       let forecastData = null;
-      if (apiCallCount < 50) { // Leave some buffer for forecast calls
+      if (apiCallCount < 50) { // Leave buffer for geocoding call
+        setApiCallCount(prev => prev + 1);
         const forecastResponse = await fetch(
           `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`
         );
 
         if (forecastResponse.ok) {
           forecastData = await forecastResponse.json();
+        } else if (forecastResponse.status === 429) {
+          console.log('Forecast API rate limited, skipping forecast');
         }
       }
 
-      // Get precise location name using reverse geocoding
-      const locationResponse = await fetch(
-        `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
-      );
-      const locationData = await locationResponse.json();
+      // Get precise location name using reverse geocoding (only if we have calls remaining)
+      let locationData = null;
+      if (apiCallCount < 55) {
+        setApiCallCount(prev => prev + 1);
+        const locationResponse = await fetch(
+          `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
+        );
+
+        if (locationResponse.ok) {
+          locationData = await locationResponse.json();
+        } else if (locationResponse.status === 429) {
+          console.log('Geocoding API rate limited, using coordinates');
+        }
+      }
       const locationName = locationData[0] ?
         `${locationData[0].name}${locationData[0].state ? ', ' + locationData[0].state : ''}, ${locationData[0].country}` :
         `Koordinat: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
