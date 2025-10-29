@@ -55,7 +55,10 @@ const MarketPrices = () => {
 
   // Get user's location
   useEffect(() => {
-    getUserLocation();
+    // Only get location if geolocation is available and user hasn't denied it
+    if (navigator.geolocation) {
+      getUserLocation();
+    }
     loadCrowdsourcedPrices();
   }, []);
 
@@ -185,21 +188,15 @@ const MarketPrices = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Informasi Harga Pasar
+            Cek Harga via Foto
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Data harga real-time untuk membantu Anda mengambil keputusan jual-beli yang tepat
+            Upload foto produk pertanian Anda dan dapatkan estimasi harga real-time dengan AI
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <Tabs defaultValue="commodities" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="commodities">Harga Jual Komoditas</TabsTrigger>
-              <TabsTrigger value="inputs">Sarana Produksi</TabsTrigger>
-              <TabsTrigger value="photo">Cek via Foto</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div></div>
 
           <div className="flex gap-2">
             <Button
@@ -306,144 +303,7 @@ const MarketPrices = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="commodities" className="w-full">
-
-          <TabsContent value="commodities" className="space-y-6">
-            {/* Price Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {commodities.map((item, index) => {
-                const crowdAvg = getAveragePrice(item.name);
-                return (
-                  <Card key={index} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg flex items-center justify-between">
-                        {item.name}
-                        {crowdAvg && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <BarChart3 className="w-3 h-3" />
-                            Crowd
-                          </div>
-                        )}
-                      </CardTitle>
-                      <CardDescription>Harga Hari Ini</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-end justify-between">
-                          <div>
-                            <p className="text-3xl font-bold text-foreground">
-                              {item.price}
-                              <span className="text-sm text-muted-foreground ml-1">{item.unit}</span>
-                            </p>
-                          </div>
-                          <div className={`flex items-center gap-1 ${item.isUp ? 'text-primary' : 'text-destructive'}`}>
-                            {item.isUp ? (
-                              <TrendingUp className="w-4 h-4" />
-                            ) : (
-                              <TrendingDown className="w-4 h-4" />
-                            )}
-                            <span className="text-sm font-semibold">{item.change}</span>
-                          </div>
-                        </div>
-                        {crowdAvg && (
-                          <div className="text-xs text-muted-foreground">
-                            Rata-rata crowdsourcing: Rp {crowdAvg.toLocaleString('id-ID')}/kg
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Price Trend Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Tren Harga Minggu Ini</CardTitle>
-                <CardDescription>Pergerakan harga komoditas utama (Rupiah per kg)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={priceData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Line type="monotone" dataKey="padi" stroke="hsl(var(--primary))" strokeWidth={2} name="Padi" />
-                    <Line type="monotone" dataKey="jagung" stroke="hsl(var(--secondary))" strokeWidth={2} name="Jagung" />
-                    <Line type="monotone" dataKey="cabai" stroke="hsl(var(--accent))" strokeWidth={2} name="Cabai" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="inputs" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inputs.map((item, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">{item.name}</CardTitle>
-                    <CardDescription>Harga Eceran Tertinggi (HET)</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-foreground">
-                      {item.price}
-                      <span className="text-sm text-muted-foreground ml-1">{item.unit}</span>
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Crowdsourced Prices Section */}
-            {crowdsourcedPrices.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    Harga dari Petani Lainnya
-                  </CardTitle>
-                  <CardDescription>
-                    Data harga crowdsourcing dari komunitas petani MyGarden
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {crowdsourcedPrices.slice(0, 10).map((price, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">{price.commodity_name}</p>
-                            <p className="text-sm text-muted-foreground">{price.location}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold">Rp {price.price.toLocaleString('id-ID')}/{price.unit}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(price.created_at).toLocaleDateString('id-ID')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="photo" className="space-y-6">
-            <PhotoPriceChecker />
-          </TabsContent>
-        </Tabs>
+        <PhotoPriceChecker />
       </div>
     </section>
   );

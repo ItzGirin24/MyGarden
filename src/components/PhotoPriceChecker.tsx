@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Upload, RefreshCw, AlertCircle, CheckCircle, Eye } from "lucide-react";
+import { Camera, Upload, RefreshCw, AlertCircle, CheckCircle, Eye, Lock } from "lucide-react";
 import { useState, useRef } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
@@ -97,22 +97,6 @@ const PhotoPriceChecker = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center gap-2">
-            <Camera className="w-6 h-6" />
-            Cek Harga via Foto
-          </CardTitle>
-          <CardDescription>
-            Fitur ini memerlukan autentikasi. Silakan login untuk menggunakan fitur cek harga via foto.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Upload Section */}
@@ -129,8 +113,12 @@ const PhotoPriceChecker = () => {
         <CardContent className="space-y-4">
           <div className="flex flex-col items-center gap-4">
             <div
-              className="w-full max-w-md h-64 border-2 border-dashed border-muted-foreground/25 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
+              className={`w-full max-w-md h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                user
+                  ? 'border-muted-foreground/25 hover:border-primary/50'
+                  : 'border-muted-foreground/25 bg-muted/20'
+              }`}
+              onClick={() => user && fileInputRef.current?.click()}
             >
               {previewUrl ? (
                 <div className="relative w-full h-full">
@@ -145,13 +133,27 @@ const PhotoPriceChecker = () => {
                 </div>
               ) : (
                 <div className="text-center">
-                  <Upload className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Klik untuk upload foto atau drag & drop
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Format: JPG, PNG, JPEG • Max: 5MB
-                  </p>
+                  {user ? (
+                    <>
+                      <Upload className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Klik untuk upload foto atau drag & drop
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Format: JPG, PNG, JPEG • Max: 5MB
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Login diperlukan untuk menggunakan fitur ini
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Silakan login untuk upload dan analisis foto
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -162,19 +164,21 @@ const PhotoPriceChecker = () => {
               accept="image/*"
               onChange={handleFileSelect}
               className="hidden"
+              disabled={!user}
             />
 
             <div className="flex gap-2">
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => user && fileInputRef.current?.click()}
                 variant="outline"
                 className="flex items-center gap-2"
+                disabled={!user}
               >
                 <Upload className="w-4 h-4" />
                 {selectedFile ? 'Ganti Foto' : 'Pilih Foto'}
               </Button>
 
-              {selectedFile && (
+              {selectedFile && user && (
                 <>
                   <Button
                     onClick={handleAnalyze}
@@ -204,6 +208,18 @@ const PhotoPriceChecker = () => {
                 </>
               )}
             </div>
+
+            {!user && (
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Lock className="w-6 h-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                  Fitur Analisis Foto Memerlukan Login
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                  Login dengan Google untuk menggunakan fitur cek harga via foto
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
