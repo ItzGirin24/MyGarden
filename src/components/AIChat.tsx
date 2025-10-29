@@ -16,6 +16,7 @@ const AIChat = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isRateLimited, setIsRateLimited] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -148,7 +149,7 @@ const AIChat = () => {
   };
 
   const handleSend = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || isRateLimited) return;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
@@ -166,6 +167,12 @@ const AIChat = () => {
 
     try {
       const aiResponse = await getAIResponse(userMessage);
+
+      // Check if response indicates rate limiting
+      if (aiResponse.includes("Rate limit reached")) {
+        setIsRateLimited(true);
+        setTimeout(() => setIsRateLimited(false), 60000); // Reset after 1 minute
+      }
 
       // Add AI response
       const messagesWithAI = [
@@ -311,9 +318,11 @@ const AIChat = () => {
                     className="flex-1"
                     disabled={isLoading}
                   />
-                  <Button onClick={handleSend} size="icon" disabled={isLoading}>
+                  <Button onClick={handleSend} size="icon" disabled={isLoading || isRateLimited}>
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isRateLimited ? (
+                      <span className="text-xs">⏱️</span>
                     ) : (
                       <Send className="w-4 h-4" />
                     )}
