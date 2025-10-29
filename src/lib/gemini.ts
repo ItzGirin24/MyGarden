@@ -81,7 +81,11 @@ export const getAIResponse = async (message: string, userName?: string): Promise
 
       try {
         const userContext = userName ? `Anda sedang berbicara dengan ${userName}.` : '';
-        const prompt = `You are MyGardenAssisten, an AI assistant specializing in agriculture and gardening. Respond in Indonesian naturally and directly. Be concise, practical, and to the point - avoid excessive greetings or small talk. Focus on providing helpful information about farming, crops, weather, and agriculture. No markdown formatting. ${userContext} User question: ${message}`;
+        const prompt = `You are MyGardenAssisten, an AI assistant specializing in agriculture and gardening. Respond in Indonesian naturally and directly. Be concise, practical, and to the point - avoid excessive greetings or small talk. Focus on providing helpful information about farming, crops, weather, and agriculture. No markdown formatting.
+
+When users ask about market prices or product prices, always check and reference the Photo Price Checker feature available on the Market Prices page. Mention that users can upload photos of their agricultural products to get AI-powered price estimates including weight estimation and current market prices.
+
+${userContext} User question: ${message}`;
 
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
