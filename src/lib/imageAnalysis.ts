@@ -80,7 +80,17 @@ Calculate totalPrice by multiplying estimatedPrice by estimatedWeight.amount.
 
 If the image shows compost or fertilizer, include the "ingredients" array with the main components you can identify.
 
-Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Consider multiple factors:
+Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Use realistic prices that reflect actual market conditions:
+
+For common commodities (examples):
+- Beras (Rice): Buy Rp 10,000-15,000/kg, Sell Rp 12,000-18,000/kg
+- Jagung (Corn): Buy Rp 4,000-6,000/kg, Sell Rp 5,000-8,000/kg
+- Cabai (Chili): Buy Rp 20,000-40,000/kg, Sell Rp 25,000-50,000/kg
+- Bawang Merah (Shallot): Buy Rp 15,000-25,000/kg, Sell Rp 18,000-30,000/kg
+- Kentang (Potato): Buy Rp 8,000-12,000/kg, Sell Rp 10,000-15,000/kg
+- Wortel (Carrot): Buy Rp 6,000-10,000/kg, Sell Rp 8,000-12,000/kg
+
+Consider multiple factors:
 - Current season and harvest conditions
 - Regional price variations across Indonesia
 - Supply and demand dynamics
@@ -88,7 +98,7 @@ Provide ACCURATE and CURRENT market prices based on the latest Indonesian market
 - Quality of the produce
 - Recent market trends and economic factors
 
-Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
+Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.
               },
               {
                 inlineData: {
@@ -130,12 +140,12 @@ Buy price should be lower than sell price. Market average should be between min 
       throw new Error('Invalid response structure');
     }
 
-    // Ensure price ranges are reasonable
-    const buyPrice = Math.max(1000, Math.min(50000, result.estimatedPrice.buy || 5000));
-    const sellPrice = Math.max(buyPrice + 1000, Math.min(100000, result.estimatedPrice.sell || 8000));
+    // Ensure price ranges are reasonable for Indonesian agricultural market
+    const buyPrice = Math.max(2000, Math.min(150000, result.estimatedPrice.buy || 10000));
+    const sellPrice = Math.max(buyPrice + 2000, Math.min(200000, result.estimatedPrice.sell || 15000));
     const marketAvg = result.marketAverage || Math.round((buyPrice + sellPrice) / 2);
-    const minPrice = Math.max(1000, result.priceRange?.min || buyPrice - 2000);
-    const maxPrice = Math.max(sellPrice + 2000, result.priceRange?.max || sellPrice + 5000);
+    const minPrice = Math.max(1000, result.priceRange?.min || buyPrice - 5000);
+    const maxPrice = Math.max(sellPrice + 5000, result.priceRange?.max || sellPrice + 10000);
 
     // Calculate total prices if weight is estimated
     let totalPrice;
