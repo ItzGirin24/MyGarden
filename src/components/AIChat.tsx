@@ -34,6 +34,30 @@ const AIChat = () => {
     loadChatHistory();
   }, [currentUser]);
 
+  // Persist messages to localStorage whenever messages change (except loading state)
+  useEffect(() => {
+    if (!isLoadingHistory && messages.length > 0) {
+      const userId = currentUser?.uid || 'anonymous';
+      localStorage.setItem(`chat_messages_${userId}`, JSON.stringify(messages));
+    }
+  }, [messages, isLoadingHistory, currentUser]);
+
+  // Load messages from localStorage on mount (as backup to database)
+  useEffect(() => {
+    const userId = currentUser?.uid || 'anonymous';
+    const savedMessages = localStorage.getItem(`chat_messages_${userId}`);
+    if (savedMessages && isLoadingHistory) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+        }
+      } catch (error) {
+        console.error('Error loading messages from localStorage:', error);
+      }
+    }
+  }, [currentUser, isLoadingHistory]);
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -127,6 +151,10 @@ const AIChat = () => {
 
         if (error) throw error;
       }
+
+      // Clear localStorage as well
+      const userId = currentUser?.uid || 'anonymous';
+      localStorage.removeItem(`chat_messages_${userId}`);
 
       // Reset to default welcome message
       setMessages([{
