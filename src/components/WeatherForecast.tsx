@@ -52,7 +52,13 @@ const WeatherForecast = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
+          const { latitude, longitude, accuracy } = position.coords;
+          console.log('Location obtained:', {
+            latitude,
+            longitude,
+            accuracy: `${accuracy.toFixed(0)} meters`,
+            timestamp: new Date(position.timestamp).toISOString()
+          });
           setLocationError(false);
           fetchWeatherData(latitude, longitude);
         },
@@ -60,29 +66,30 @@ const WeatherForecast = () => {
           console.error('Error getting location:', {
             code: error.code,
             message: error.message,
-            type: 'geolocation_error'
+            type: 'geolocation_error',
+            timestamp: new Date().toISOString()
           });
           setLocationError(true);
           setCurrentWeather(prev => ({
             ...prev,
-            location: "Izin - lokasi ditolak."
+            location: "Izin lokasi ditolak. Menggunakan lokasi default."
           }));
-          // Fallback to Bogor coordinates
-          fetchWeatherData(-6.5963, 106.7972);
+          // Fallback to Jakarta coordinates (more central for Indonesia)
+          fetchWeatherData(-6.2088, 106.8456);
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
+          timeout: 15000, // Increased timeout for better accuracy
+          maximumAge: 600000 // 10 minutes cache
         }
       );
     } else {
       setLocationError(true);
       setCurrentWeather(prev => ({
         ...prev,
-        location: "Geolocation tidak didukung browser. Menggunakan Bogor sebagai default."
+        location: "Geolocation tidak didukung. Menggunakan Jakarta sebagai default."
       }));
-      fetchWeatherData(-6.5963, 106.7972);
+      fetchWeatherData(-6.2088, 106.8456);
     }
   };
 
