@@ -76,15 +76,27 @@ IMPORTANT: Estimate the weight of the product shown in the image. For example:
 
 Calculate totalPrice by multiplying estimatedPrice by estimatedWeight.amount.
 
-Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Consider multiple factors:
+Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Use REAL market data and be extremely precise with pricing. Here are current approximate prices for common commodities (update these with latest data):
+
+- Beras (Rice): Buy Rp 9,000-12,000/kg, Sell Rp 10,000-14,000/kg
+- Jagung (Corn): Buy Rp 4,000-6,000/kg, Sell Rp 5,000-7,000/kg
+- Cabai Merah (Red Chili): Buy Rp 25,000-40,000/kg, Sell Rp 30,000-50,000/kg
+- Bawang Merah (Shallot): Buy Rp 15,000-25,000/kg, Sell Rp 18,000-30,000/kg
+- Tomat (Tomato): Buy Rp 8,000-15,000/kg, Sell Rp 10,000-18,000/kg
+- Kentang (Potato): Buy Rp 6,000-10,000/kg, Sell Rp 8,000-12,000/kg
+- Kubis (Cabbage): Buy Rp 5,000-8,000/kg, Sell Rp 6,000-10,000/kg
+- Wortel (Carrot): Buy Rp 8,000-12,000/kg, Sell Rp 10,000-15,000/kg
+
+Consider multiple factors for accuracy:
 - Current season and harvest conditions
-- Regional price variations across Indonesia
+- Regional price variations across Indonesia (Java vs outer islands)
 - Supply and demand dynamics
 - Transportation costs
-- Quality of the produce
+- Quality of the produce (freshness, size, grade)
 - Recent market trends and economic factors
+- Wholesale vs retail pricing differences
 
-Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
+Buy price should be lower than sell price (typically 10-20% difference). Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification. Prioritize accuracy over speculation.`
               },
               {
                 inlineData: {
