@@ -288,13 +288,13 @@ const PhotoPriceChecker = () => {
                   <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                     <span className="text-sm">Harga Beli</span>
                     <span className="font-bold text-green-700 dark:text-green-300">
-                      Rp {analysisResult.estimatedPrice.buy.toLocaleString('id-ID')}
+                      Rp {analysisResult.estimatedPrice.buy.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                     <span className="text-sm">Harga Jual</span>
                     <span className="font-bold text-blue-700 dark:text-blue-300">
-                      Rp {analysisResult.estimatedPrice.sell.toLocaleString('id-ID')}
+                      Rp {analysisResult.estimatedPrice.sell.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
                     </span>
                   </div>
                 </div>
@@ -307,14 +307,14 @@ const PhotoPriceChecker = () => {
                     <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                       <span className="text-sm">Rata-rata Pasar</span>
                       <span className="font-bold text-orange-700 dark:text-orange-300">
-                        Rp {analysisResult.marketAverage.toLocaleString('id-ID')}
+                        Rp {analysisResult.marketAverage.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-950/20 rounded-lg">
                     <span className="text-sm">Rentang Harga</span>
                     <span className="font-bold text-gray-700 dark:text-gray-300">
-                      Rp {analysisResult.priceRange.min.toLocaleString('id-ID')} - {analysisResult.priceRange.max.toLocaleString('id-ID')}
+                      Rp {analysisResult.priceRange.min.toLocaleString('id-ID')} - {analysisResult.priceRange.max.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
                     </span>
                   </div>
                 </div>
