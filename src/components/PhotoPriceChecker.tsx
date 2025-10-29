@@ -30,6 +30,7 @@ interface AnalysisResult {
     min: number;
     max: number;
   };
+  ingredients?: string[];
 }
 
 const PhotoPriceChecker = () => {
@@ -271,10 +272,10 @@ const PhotoPriceChecker = () => {
               <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
                 <h4 className="font-medium text-purple-800 dark:text-purple-200 mb-2">Estimasi Berat</h4>
                 <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                  {analysisResult.estimatedWeight.amount} {analysisResult.estimatedWeight.unit}
+                  {analysisResult.estimatedWeight.amount.toFixed(1)} {analysisResult.estimatedWeight.unit}
                 </div>
-                <Badge variant={analysisResult.estimatedWeight.confidence > 0.7 ? "default" : "secondary"} className="mt-2">
-                  Confidence Berat: {Math.round(analysisResult.estimatedWeight.confidence * 100)}%
+                <Badge variant="outline" className="mt-2">
+                  Confidence: {Math.round(analysisResult.estimatedWeight.confidence * 100)}%
                 </Badge>
               </div>
             )}
@@ -287,13 +288,13 @@ const PhotoPriceChecker = () => {
                   <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                     <span className="text-sm">Harga Beli</span>
                     <span className="font-bold text-green-700 dark:text-green-300">
-                      Rp {analysisResult.estimatedPrice.buy.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
+                      Rp {analysisResult.estimatedPrice.buy.toLocaleString('id-ID')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                     <span className="text-sm">Harga Jual</span>
                     <span className="font-bold text-blue-700 dark:text-blue-300">
-                      Rp {analysisResult.estimatedPrice.sell.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
+                      Rp {analysisResult.estimatedPrice.sell.toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
@@ -306,37 +307,51 @@ const PhotoPriceChecker = () => {
                     <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                       <span className="text-sm">Rata-rata Pasar</span>
                       <span className="font-bold text-orange-700 dark:text-orange-300">
-                        Rp {analysisResult.marketAverage.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
+                        Rp {analysisResult.marketAverage.toLocaleString('id-ID')}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-950/20 rounded-lg">
                     <span className="text-sm">Rentang Harga</span>
                     <span className="font-bold text-gray-700 dark:text-gray-300">
-                      Rp {analysisResult.priceRange.min.toLocaleString('id-ID')} - {analysisResult.priceRange.max.toLocaleString('id-ID')}/{analysisResult.estimatedPrice.unit}
+                      Rp {analysisResult.priceRange.min.toLocaleString('id-ID')} - {analysisResult.priceRange.max.toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Total Price if weight is estimated */}
-            {analysisResult.totalPrice && analysisResult.estimatedWeight && (
-              <div className="space-y-3">
-                <h4 className="font-medium">Total Harga untuk {analysisResult.estimatedWeight.amount} {analysisResult.estimatedWeight.unit}</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex justify-between items-center p-3 bg-green-100 dark:bg-green-950/30 rounded-lg border-2 border-green-200 dark:border-green-800">
-                    <span className="text-sm font-medium">Total Harga Beli</span>
-                    <span className="font-bold text-green-800 dark:text-green-200 text-lg">
+            {/* Total Price */}
+            {analysisResult.totalPrice && (
+              <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Total Harga untuk {analysisResult.estimatedWeight?.amount.toFixed(1)} {analysisResult.estimatedWeight?.unit}</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-yellow-700 dark:text-yellow-300">Total Beli</div>
+                    <div className="text-xl font-bold text-yellow-800 dark:text-yellow-200">
                       Rp {analysisResult.totalPrice.buy.toLocaleString('id-ID')}
-                    </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-blue-100 dark:bg-blue-950/30 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                    <span className="text-sm font-medium">Total Harga Jual</span>
-                    <span className="font-bold text-blue-800 dark:text-blue-200 text-lg">
+                  <div>
+                    <div className="text-sm text-yellow-700 dark:text-yellow-300">Total Jual</div>
+                    <div className="text-xl font-bold text-yellow-800 dark:text-yellow-200">
                       Rp {analysisResult.totalPrice.sell.toLocaleString('id-ID')}
-                    </span>
+                    </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Ingredients */}
+            {analysisResult.ingredients && analysisResult.ingredients.length > 0 && (
+              <div className="p-4 bg-brown-50 dark:bg-brown-950/20 rounded-lg border border-brown-200 dark:border-brown-800">
+                <h4 className="font-medium text-brown-800 dark:text-brown-200 mb-2">Bahan-bahan Terdeteksi</h4>
+                <div className="flex flex-wrap gap-2">
+                  {analysisResult.ingredients.map((ingredient, index) => (
+                    <Badge key={index} variant="outline">
+                      {ingredient}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             )}

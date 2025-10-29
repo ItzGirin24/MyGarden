@@ -20,6 +20,7 @@ export const analyzeImage = async (file: File): Promise<{
     min: number;
     max: number;
   };
+  ingredients?: string[];
 }> => {
   try {
     const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -30,7 +31,7 @@ export const analyzeImage = async (file: File): Promise<{
     // Convert file to base64
     const base64Data = await getFileAsBase64(file);
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +63,8 @@ export const analyzeImage = async (file: File): Promise<{
   "priceRange": {
     "min": minimum_market_price_per_kg_in_rupiah,
     "max": maximum_market_price_per_kg_in_rupiah
-  }
+  },
+  "ingredients": ["list", "of", "ingredients", "if", "applicable"]
 }
 
 Common Indonesian agricultural commodities: padi (rice), jagung (corn), cabai (chili), bawang merah (shallot), tomat (tomato), kentang (potato), kubis (cabbage), wortel (carrot), dll.
@@ -76,27 +78,17 @@ IMPORTANT: Estimate the weight of the product shown in the image. For example:
 
 Calculate totalPrice by multiplying estimatedPrice by estimatedWeight.amount.
 
-Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Use REAL market data and be extremely precise with pricing. Here are current approximate prices for common commodities (update these with latest data):
+If the image shows compost or fertilizer, include the "ingredients" array with the main components you can identify.
 
-- Beras (Rice): Buy Rp 9,000-12,000/kg, Sell Rp 10,000-14,000/kg
-- Jagung (Corn): Buy Rp 4,000-6,000/kg, Sell Rp 5,000-7,000/kg
-- Cabai Merah (Red Chili): Buy Rp 25,000-40,000/kg, Sell Rp 30,000-50,000/kg
-- Bawang Merah (Shallot): Buy Rp 15,000-25,000/kg, Sell Rp 18,000-30,000/kg
-- Tomat (Tomato): Buy Rp 8,000-15,000/kg, Sell Rp 10,000-18,000/kg
-- Kentang (Potato): Buy Rp 6,000-10,000/kg, Sell Rp 8,000-12,000/kg
-- Kubis (Cabbage): Buy Rp 5,000-8,000/kg, Sell Rp 6,000-10,000/kg
-- Wortel (Carrot): Buy Rp 8,000-12,000/kg, Sell Rp 10,000-15,000/kg
-
-Consider multiple factors for accuracy:
+Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Consider multiple factors:
 - Current season and harvest conditions
-- Regional price variations across Indonesia (Java vs outer islands)
+- Regional price variations across Indonesia
 - Supply and demand dynamics
 - Transportation costs
-- Quality of the produce (freshness, size, grade)
+- Quality of the produce
 - Recent market trends and economic factors
-- Wholesale vs retail pricing differences
 
-Buy price should be lower than sell price (typically 10-20% difference). Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification. Prioritize accuracy over speculation.`
+Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
               },
               {
                 inlineData: {
@@ -172,7 +164,8 @@ Buy price should be lower than sell price (typically 10-20% difference). Market 
       priceRange: {
         min: minPrice,
         max: maxPrice
-      }
+      },
+      ingredients: result.ingredients
     };
 
   } catch (error) {
