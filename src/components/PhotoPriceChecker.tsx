@@ -331,13 +331,22 @@ const PhotoPriceChecker = () => {
                     <div className="text-xl font-bold text-yellow-800 dark:text-yellow-200">
                       Rp {analysisResult.totalPrice.buy.toLocaleString('id-ID')}
                     </div>
+                    <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                      Rp {analysisResult.estimatedPrice.buy.toLocaleString('id-ID')} × {analysisResult.estimatedWeight?.amount.toFixed(1)}kg
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-yellow-700 dark:text-yellow-300">Total Jual</div>
                     <div className="text-xl font-bold text-yellow-800 dark:text-yellow-200">
                       Rp {analysisResult.totalPrice.sell.toLocaleString('id-ID')}
                     </div>
+                    <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                      Rp {analysisResult.estimatedPrice.sell.toLocaleString('id-ID')} × {analysisResult.estimatedWeight?.amount.toFixed(1)}kg
+                    </div>
                   </div>
+                </div>
+                <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-3">
+                  * Total harga dihitung dari: Harga per kg × Estimasi berat
                 </div>
               </div>
             )}
