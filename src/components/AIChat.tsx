@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, Send, User as UserIcon, Loader2 } from "lucide-react";
+import { Bot, Send, User as UserIcon, Loader2, RotateCcw } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -115,7 +115,37 @@ const AIChat = () => {
     "Jelaskan strategi diversifikasi 4 komoditas"
   ];
 
+  const resetChat = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error } = await supabase
+          .from('chat_messages')
+          .delete()
+          .eq('user_id', user.id);
 
+        if (error) throw error;
+      }
+
+      // Reset to default welcome message
+      setMessages([{
+        role: "assistant",
+        content: "Selamat datang di Tani Cerdas! 🌾 Saya asisten AI Anda yang siap membantu dengan pertanyaan seputar pertanian. Silakan tanyakan tentang harga pasar, prakiraan cuaca, tips bercocok tanam, atau apa saja!"
+      }]);
+
+      toast({
+        title: "Chat Reset",
+        description: "Riwayat chat telah dihapus.",
+      });
+    } catch (error) {
+      console.error('Error resetting chat:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menghapus riwayat chat.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSend = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -182,14 +212,25 @@ const AIChat = () => {
         <div className="max-w-4xl mx-auto">
           <Card className="shadow-xl">
             <CardHeader className="border-b">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary p-2 rounded-full">
-                  <Bot className="w-6 h-6 text-primary-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary p-2 rounded-full">
+                    <Bot className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <CardTitle>Tani Cerdas AI</CardTitle>
+                    <CardDescription>Asisten pertanian cerdas Anda</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle>Tani Cerdas AI</CardTitle>
-                  <CardDescription>Asisten pertanian cerdas Anda</CardDescription>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetChat}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset Chat
+                </Button>
               </div>
             </CardHeader>
             
