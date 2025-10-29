@@ -7,8 +7,12 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: "localhost",
     port: 8080,
+    https: false, // Set to true if you have SSL certificates
+  },
+  define: {
+    __DEV__: mode === 'development',
   },
   plugins: [
     react(),
@@ -28,6 +32,10 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
+            src: 'pwa-512x512.png', // Pastikan Anda memiliki ikon ini di folder public/
+            sizes: '512x512',
+            type: 'image/png'
+          },{
             src: 'favicon.ico',
             sizes: '64x64 32x32 24x24 16x16',
             type: 'image/x-icon'
@@ -49,6 +57,10 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
       }
     })
   ].filter(Boolean),
@@ -59,9 +71,8 @@ export default defineConfig(({ mode }) => ({
           vendor: ['react', 'react-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
           charts: ['recharts'],
-          firebase: ['firebase/app', 'firebase/auth'],
-          supabase: ['@supabase/supabase-js'],
-          groq: ['groq-sdk']
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+          supabase: ['@supabase/supabase-js']
         }
       }
     },

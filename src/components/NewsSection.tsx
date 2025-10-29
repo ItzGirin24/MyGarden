@@ -1,49 +1,67 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, User, ArrowRight } from "lucide-react";
-import farmerSuccessImage from "@/assets/farmer-success.jpg";
-import marketCropsImage from "@/assets/market-crops.jpg";
+import { Calendar, User, ArrowRight, Edit } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { collection, getDocs, orderBy, query, doc, deleteDoc } from "firebase/firestore";
+import NewsAdmin from "./NewsAdmin";
+
+interface NewsArticle {
+  id?: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  author: string;
+  thumbnailUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const NewsSection = () => {
-  const articles = [
-    {
-      title: "Kisah Sukses: Pak Budi Tingkatkan Hasil Panen 200% dengan Diversifikasi 4 Komoditas",
-      excerpt: "Petani di Bogor berbagi strategi sukses membagi lahan menjadi 4 bagian untuk menanam padi, jagung, cabai, dan sayuran secara bersamaan...",
-      category: "Kisah Sukses",
-      date: "15 Des 2024",
-      author: "Tim MyGarden",
-      image: farmerSuccessImage,
-      featured: true
-    },
-    {
-      title: "Pemerintah Naikkan Harga Pembelian Padi untuk Melindungi Petani",
-      excerpt: "Kementerian Pertanian mengumumkan kenaikan HPP (Harga Pembelian Pemerintah) untuk GKP menjadi Rp 5.500/kg efektif bulan depan...",
-      category: "Kebijakan",
-      date: "12 Des 2024",
-      author: "Redaksi",
-      image: marketCropsImage,
-      featured: false
-    },
-    {
-      title: "Teknologi Irigasi Tetes: Hemat Air hingga 50% dan Tingkatkan Produktivitas",
-      excerpt: "Panduan lengkap menggunakan sistem irigasi tetes modern yang terbukti meningkatkan efisiensi penggunaan air dan pupuk...",
-      category: "Teknologi",
-      date: "10 Des 2024",
-      author: "Dr. Ahmad Santoso",
-      image: marketCropsImage,
-      featured: false
-    },
-    {
-      title: "Cara Mengatasi Hama Wereng pada Padi: Panduan Praktis",
-      excerpt: "Metode pengendalian hama wereng yang efektif dan ramah lingkungan, termasuk penggunaan predator alami dan pestisida organik...",
-      category: "Panduan",
-      date: "8 Des 2024",
-      author: "Prof. Siti Nurhaliza",
-      image: farmerSuccessImage,
-      featured: false
+  const [user] = useAuthState(auth);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if user is admin
+  const isAdmin = user?.email === "mygardenid2025@gmail.com";
+
+  useEffect(() => {
+    loadArticles();
+  }, []);
+
+  const loadArticles = async () => {
+    try {
+      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const articlesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate()
+      })) as NewsArticle[];
+      setArticles(articlesData);
+    } catch (error) {
+      console.error("Error loading articles:", error);
+      // Fallback to empty array if Firestore fails
+      setArticles([]);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  const deleteArticle = async (articleId: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus artikel ini?")) return;
+
+    try {
+      await deleteDoc(doc(db, "news", articleId));
+      await loadArticles();
+    } catch (error) {
+      console.error("Error deleting article:", error);
+    }
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -58,6 +76,18 @@ const NewsSection = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <section id="news" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Memuat berita...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="news" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -70,51 +100,76 @@ const NewsSection = () => {
           </p>
         </div>
 
+        {/* Admin Panel */}
+        {isAdmin && <NewsAdmin loadArticles={loadArticles} />}
+
         {/* Featured Article */}
-        <Card className="mb-8 overflow-hidden hover:shadow-xl transition-shadow">
-          <div className="grid md:grid-cols-2 gap-0">
-            <div className="relative h-64 md:h-auto">
-              <img 
-                src={articles[0].image} 
-                alt={articles[0].title}
-                className="w-full h-full object-cover"
-              />
-              <Badge className={`absolute top-4 left-4 ${getCategoryColor(articles[0].category)}`}>
-                {articles[0].category}
-              </Badge>
-            </div>
-            <div className="p-6 md:p-8 flex flex-col justify-center">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-2xl md:text-3xl mb-3">{articles[0].title}</CardTitle>
-                <CardDescription className="text-base">{articles[0].excerpt}</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{articles[0].date}</span>
+        {articles.length > 0 && (
+          <Card className="mb-8 overflow-hidden hover:shadow-xl transition-shadow">
+            <div className="grid md:grid-cols-2 gap-0">
+              <div className="relative h-64 md:h-auto">
+                <img
+                  src={articles[0].thumbnailUrl || "/placeholder.svg"}
+                  alt={articles[0].title}
+                  className="w-full h-full object-cover"
+                />
+                <Badge className={`absolute top-4 left-4 ${getCategoryColor(articles[0].category)}`}>
+                  {articles[0].category}
+                </Badge>
+              </div>
+              <div className="p-6 md:p-8 flex flex-col justify-center">
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle className="text-2xl md:text-3xl mb-3">{articles[0].title}</CardTitle>
+                  <CardDescription className="text-base">{articles[0].excerpt}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{articles[0].createdAt?.toLocaleDateString('id-ID')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      <span>{articles[0].author}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>{articles[0].author}</span>
+                  <div className="flex gap-2">
+                    <Button className="gap-2">
+                      Baca Selengkapnya
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                    {isAdmin && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => (window as any).openEditDialog?.(articles[0])}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteArticle(articles[0].id!)}
+                        >
+                          Hapus
+                        </Button>
+                      </>
+                    )}
                   </div>
-                </div>
-                <Button className="gap-2">
-                  Baca Selengkapnya
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </CardContent>
+                </CardContent>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Other Articles */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.slice(1).map((article, index) => (
-            <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow group">
+          {articles.slice(1).map((article) => (
+            <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
               <div className="relative h-48">
-                <img 
-                  src={article.image} 
+                <img
+                  src={article.thumbnailUrl || "/placeholder.svg"}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -130,17 +185,37 @@ const NewsSection = () => {
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    <span>{article.date}</span>
+                    <span>{article.createdAt?.toLocaleDateString('id-ID')}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="w-3 h-3" />
                     <span>{article.author}</span>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="w-full gap-2">
-                  Baca Artikel
-                  <ArrowRight className="w-3 h-3" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    Baca Artikel
+                    <ArrowRight className="w-3 h-3" />
+                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => (window as any).openEditDialog?.(article)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteArticle(article.id!)}
+                      >
+                        Hapus
+                      </Button>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

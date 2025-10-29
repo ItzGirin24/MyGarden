@@ -41,6 +41,7 @@ const WeatherForecast = () => {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [locationError, setLocationError] = useState(false);
 
   // Get user's location and fetch weather
   useEffect(() => {
@@ -52,19 +53,31 @@ const WeatherForecast = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          setLocationError(false);
           fetchWeatherData(latitude, longitude);
         },
         (error) => {
-          console.error('Error getting location:', error);
+          console.error('Error getting location:', {
+            code: error.code,
+            message: error.message,
+            type: 'geolocation_error'
+          });
+          setLocationError(true);
           setCurrentWeather(prev => ({
             ...prev,
-            location: "Lokasi tidak dapat dideteksi. Menggunakan Bogor sebagai default."
+            location: "Izin - lokasi ditolak."
           }));
           // Fallback to Bogor coordinates
           fetchWeatherData(-6.5963, 106.7972);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
         }
       );
     } else {
+      setLocationError(true);
       setCurrentWeather(prev => ({
         ...prev,
         location: "Geolocation tidak didukung browser. Menggunakan Bogor sebagai default."
@@ -73,161 +86,103 @@ const WeatherForecast = () => {
     }
   };
 
+  const requestLocationPermission = () => {
+    setLocationError(false);
+    getCurrentLocation();
+  };
+
   const fetchWeatherData = async (lat, lon) => {
-    // Rate limiting: max 60 calls per minute (OpenWeatherMap free tier limit)
-    const now = Date.now();
-    const timeSinceLastCall = now - lastApiCall;
-
-    // Reset counter if more than a minute has passed
-    if (timeSinceLastCall > 60000) {
-      setApiCallCount(0);
-    }
-
-    // Check if we're approaching the limit (leave buffer for multiple calls)
-    if (apiCallCount >= 55) {
-      console.log('Rate limit approaching, will retry later');
-      setCurrentWeather(prev => ({
-        ...prev,
-        location: "Batas API hampir tercapai. Coba lagi dalam 1 menit."
-      }));
-      setIsLoading(false);
-      return;
-    }
-
-    setLastApiCall(now);
     setIsLoading(true);
 
     try {
-      // Using OpenWeatherMap API (free tier) - more accurate with additional parameters
-      const API_KEY = 'bd5e378503939ddaee76f12ad7a97608'; // Free API key
-
-      // Get current weather with more details
-      setApiCallCount(prev => prev + 1);
+      // Using Open-Meteo API (free, no API key required, 10,000 calls/day)
+      // Get current weather and forecast in one request
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia/Jakarta&forecast_days=7`
       );
 
       if (!response.ok) {
-        if (response.status === 429) {
-          console.log('Rate limit exceeded, will retry later');
-          setCurrentWeather(prev => ({
-            ...prev,
-            location: "Batas API tercapai. Coba lagi nanti."
-          }));
-          return;
-        }
-        throw new Error(`Weather API request failed: ${response.status}`);
+        throw new Error(`Open-Meteo API request failed: ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Get 5-day forecast for better accuracy (only if we have calls remaining)
-      let forecastData = null;
-      if (apiCallCount < 50) { // Leave buffer for geocoding call
-        setApiCallCount(prev => prev + 1);
-        const forecastResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`
-        );
-
-        if (forecastResponse.ok) {
-          forecastData = await forecastResponse.json();
-        } else if (forecastResponse.status === 429) {
-          console.log('Forecast API rate limited, skipping forecast');
-        }
-      }
-
-      // Get precise location name using reverse geocoding (only if we have calls remaining)
-      let locationData = null;
-      if (apiCallCount < 55) {
-        setApiCallCount(prev => prev + 1);
+      // Get location name using a free geocoding service
+      let locationName = `Koordinat: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      try {
         const locationResponse = await fetch(
-          `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`
         );
-
         if (locationResponse.ok) {
-          locationData = await locationResponse.json();
-        } else if (locationResponse.status === 429) {
-          console.log('Geocoding API rate limited, using coordinates');
+          const locationData = await locationResponse.json();
+          if (locationData.city && locationData.countryName) {
+            locationName = `${locationData.city}, ${locationData.countryName}`;
+          } else if (locationData.locality) {
+            locationName = `${locationData.locality}, ${locationData.countryName || 'Indonesia'}`;
+          }
         }
+      } catch (locationError) {
+        console.log('Location service failed, using coordinates');
       }
-      const locationName = locationData[0] ?
-        `${locationData[0].name}${locationData[0].state ? ', ' + locationData[0].state : ''}, ${locationData[0].country}` :
-        `Koordinat: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
 
-      // More accurate weather condition mapping
-      const weatherId = data.weather[0].id;
-      const weatherMain = data.weather[0].main.toLowerCase();
-      const weatherDescription = data.weather[0].description.toLowerCase();
-
+      // Open-Meteo weather code mapping
+      const weatherCode = data.current.weather_code;
       let condition = 'Cerah';
       let icon = Sun;
 
-      // More precise weather condition mapping
-      if (weatherId >= 200 && weatherId < 300) {
-        condition = 'Badai Petir';
-        icon = CloudRain;
-      } else if (weatherId >= 300 && weatherId < 400) {
-        condition = 'Gerimis';
-        icon = CloudRain;
-      } else if (weatherId >= 500 && weatherId < 600) {
-        if (weatherId >= 520) {
-          condition = 'Hujan Lebat';
-        } else {
-          condition = 'Hujan';
-        }
-        icon = CloudRain;
-      } else if (weatherId >= 600 && weatherId < 700) {
-        condition = 'Salju';
-        icon = Cloud;
-      } else if (weatherId >= 700 && weatherId < 800) {
-        condition = 'Kabut';
-        icon = Cloud;
-      } else if (weatherId === 800) {
-        condition = 'Cerah';
-        icon = Sun;
-      } else if (weatherId > 800 && weatherId < 900) {
-        if (weatherId === 801) {
-          condition = 'Sedikit Berawan';
-        } else if (weatherId === 802) {
-          condition = 'Berawan Sebagian';
-        } else {
-          condition = 'Berawan';
-        }
-        icon = Cloud;
+      // Open-Meteo weather codes
+      switch (weatherCode) {
+        case 0: condition = 'Cerah'; icon = Sun; break;
+        case 1: condition = 'Sebagian Berawan'; icon = Sun; break;
+        case 2: condition = 'Berawan'; icon = Cloud; break;
+        case 3: condition = 'Mendung'; icon = Cloud; break;
+        case 45: condition = 'Kabut'; icon = Cloud; break;
+        case 48: condition = 'Kabut Beku'; icon = Cloud; break;
+        case 51: condition = 'Gerimis Ringan'; icon = CloudRain; break;
+        case 53: condition = 'Gerimis'; icon = CloudRain; break;
+        case 55: condition = 'Gerimis Lebat'; icon = CloudRain; break;
+        case 56: condition = 'Gerimis Beku Ringan'; icon = CloudRain; break;
+        case 57: condition = 'Gerimis Beku'; icon = CloudRain; break;
+        case 61: condition = 'Hujan Ringan'; icon = CloudRain; break;
+        case 63: condition = 'Hujan'; icon = CloudRain; break;
+        case 65: condition = 'Hujan Lebat'; icon = CloudRain; break;
+        case 66: condition = 'Hujan Beku Ringan'; icon = CloudRain; break;
+        case 67: condition = 'Hujan Beku'; icon = CloudRain; break;
+        case 71: condition = 'Salju Ringan'; icon = Cloud; break;
+        case 73: condition = 'Salju'; icon = Cloud; break;
+        case 75: condition = 'Salju Lebat'; icon = Cloud; break;
+        case 77: condition = 'Butiran Salju'; icon = Cloud; break;
+        case 80: condition = 'Hujan Ringan'; icon = CloudRain; break;
+        case 81: condition = 'Hujan'; icon = CloudRain; break;
+        case 82: condition = 'Hujan Lebat'; icon = CloudRain; break;
+        case 85: condition = 'Salju Ringan'; icon = Cloud; break;
+        case 86: condition = 'Salju Lebat'; icon = Cloud; break;
+        case 95: condition = 'Badai Petir'; icon = CloudRain; break;
+        case 96: condition = 'Badai Petir dengan Hail'; icon = CloudRain; break;
+        case 99: condition = 'Badai Petir Berat dengan Hail'; icon = CloudRain; break;
+        default: condition = 'Cerah'; icon = Sun;
       }
 
-      // Calculate more accurate rain chance from forecast data
-      let rainChance = '0%';
-      if (forecastData && forecastData.list) {
-        const next24Hours = forecastData.list.slice(0, 8); // Next 24 hours (3-hour intervals)
-        const rainCount = next24Hours.filter(item =>
-          item.weather[0].main.toLowerCase().includes('rain') ||
-          (item.rain && item.rain['3h'] > 0)
-        ).length;
-        const calculatedRainChance = Math.round((rainCount / next24Hours.length) * 100);
-        rainChance = `${calculatedRainChance}%`;
-      } else {
-        // Fallback to current rain data
-        rainChance = data.rain ? `${Math.round(data.rain['1h'] || 0)}%` : '0%';
-      }
+      // Calculate rain chance from hourly data (next 24 hours)
+      const next24Hours = data.hourly.precipitation_probability.slice(0, 24);
+      const avgRainChance = next24Hours.reduce((a, b) => a + b, 0) / next24Hours.length;
+      const rainChance = `${Math.round(avgRainChance)}%`;
 
       setCurrentWeather({
         location: locationName,
-        temperature: `${Math.round(data.main.temp)}°C`,
+        temperature: `${Math.round(data.current.temperature_2m)}°C`,
         condition: condition,
-        humidity: `${data.main.humidity}%`,
-        windSpeed: `${Math.round(data.wind.speed * 3.6)} km/h`,
+        humidity: `${data.current.relative_humidity_2m}%`,
+        windSpeed: `${Math.round(data.current.wind_speed_10m)} km/h`,
         rainChance: rainChance,
         lastUpdated: new Date()
       });
 
-      // Update forecast if available
-      if (forecastData && forecastData.list) {
-        updateForecast(forecastData);
-      }
+      // Update forecast
+      updateForecast(data);
 
       // Generate agricultural alerts based on current weather
-      generateAlerts(data, forecastData);
+      generateAlerts(data);
 
     } catch (error) {
       console.error('Error fetching weather:', error);
@@ -245,61 +200,59 @@ const WeatherForecast = () => {
     }
   };
 
-  const updateForecast = (forecastData) => {
+  const updateForecast = (data) => {
     const dailyForecasts = [];
-    const today = new Date();
 
-    // Group forecast by day
-    const dailyData = {};
-    forecastData.list.forEach(item => {
-      const date = new Date(item.dt * 1000);
-      const dayKey = date.toDateString();
-
-      if (!dailyData[dayKey]) {
-        dailyData[dayKey] = {
-          temps: [],
-          conditions: [],
-          rains: [],
-          date: date
-        };
-      }
-
-      dailyData[dayKey].temps.push(item.main.temp);
-      dailyData[dayKey].conditions.push(item.weather[0]);
-      if (item.rain && item.rain['3h']) {
-        dailyData[dayKey].rains.push(item.rain['3h']);
-      }
-    });
-
-    // Create 7-day forecast
-    Object.keys(dailyData).slice(0, 7).forEach((dayKey, index) => {
-      const dayData = dailyData[dayKey];
-      const avgTemp = dayData.temps.reduce((a, b) => a + b, 0) / dayData.temps.length;
-      const mainCondition = dayData.conditions[0]; // Use first condition as representative
-
-      // Map condition to icon
+    // Open-Meteo provides daily data directly
+    data.daily.weather_code.forEach((code, index) => {
+      // Map weather code to condition and icon
+      let condition = 'Cerah';
       let icon = Sun;
-      const weatherId = mainCondition.id;
-      if (weatherId >= 200 && weatherId < 600) {
-        icon = CloudRain;
-      } else if (weatherId >= 600 && weatherId < 800) {
-        icon = Cloud;
-      } else if (weatherId >= 800) {
-        icon = Cloud;
-      }
 
-      // Calculate rain probability
-      const rainProbability = dayData.rains.length > 0 ?
-        Math.round((dayData.rains.length / dayData.conditions.length) * 100) : 0;
+      switch (code) {
+        case 0: condition = 'Cerah'; icon = Sun; break;
+        case 1: condition = 'Sebagian Berawan'; icon = Sun; break;
+        case 2: condition = 'Berawan'; icon = Cloud; break;
+        case 3: condition = 'Mendung'; icon = Cloud; break;
+        case 45: condition = 'Kabut'; icon = Cloud; break;
+        case 48: condition = 'Kabut Beku'; icon = Cloud; break;
+        case 51: condition = 'Gerimis Ringan'; icon = CloudRain; break;
+        case 53: condition = 'Gerimis'; icon = CloudRain; break;
+        case 55: condition = 'Gerimis Lebat'; icon = CloudRain; break;
+        case 56: condition = 'Gerimis Beku Ringan'; icon = CloudRain; break;
+        case 57: condition = 'Gerimis Beku'; icon = CloudRain; break;
+        case 61: condition = 'Hujan Ringan'; icon = CloudRain; break;
+        case 63: condition = 'Hujan'; icon = CloudRain; break;
+        case 65: condition = 'Hujan Lebat'; icon = CloudRain; break;
+        case 66: condition = 'Hujan Beku Ringan'; icon = CloudRain; break;
+        case 67: condition = 'Hujan Beku'; icon = CloudRain; break;
+        case 71: condition = 'Salju Ringan'; icon = Cloud; break;
+        case 73: condition = 'Salju'; icon = Cloud; break;
+        case 75: condition = 'Salju Lebat'; icon = Cloud; break;
+        case 77: condition = 'Butiran Salju'; icon = Cloud; break;
+        case 80: condition = 'Hujan Ringan'; icon = CloudRain; break;
+        case 81: condition = 'Hujan'; icon = CloudRain; break;
+        case 82: condition = 'Hujan Lebat'; icon = CloudRain; break;
+        case 85: condition = 'Salju Ringan'; icon = Cloud; break;
+        case 86: condition = 'Salju Lebat'; icon = Cloud; break;
+        case 95: condition = 'Badai Petir'; icon = CloudRain; break;
+        case 96: condition = 'Badai Petir dengan Hail'; icon = CloudRain; break;
+        case 99: condition = 'Badai Petir Berat dengan Hail'; icon = CloudRain; break;
+        default: condition = 'Cerah'; icon = Sun;
+      }
 
       const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const dayName = index === 0 ? 'Hari Ini' : dayNames[dayData.date.getDay()];
+      const date = new Date(data.daily.time[index]);
+      const dayName = index === 0 ? 'Hari Ini' : dayNames[date.getDay()];
+
+      // Calculate average temperature
+      const avgTemp = (data.daily.temperature_2m_max[index] + data.daily.temperature_2m_min[index]) / 2;
 
       dailyForecasts.push({
         day: dayName,
         temp: `${Math.round(avgTemp)}°C`,
-        condition: mainCondition.description,
-        rain: `${rainProbability}%`,
+        condition: condition,
+        rain: `${data.daily.precipitation_probability_max[index]}%`,
         icon: icon
       });
     });
@@ -307,14 +260,12 @@ const WeatherForecast = () => {
     setForecast(dailyForecasts);
   };
 
-  const generateAlerts = (weatherData, forecastData = null) => {
+  const generateAlerts = (data) => {
     const newAlerts = [];
-    const humidity = weatherData.main.humidity;
-    const temp = weatherData.main.temp;
-    const windSpeed = weatherData.wind.speed;
-    const pressure = weatherData.main.pressure;
-    const visibility = weatherData.visibility || 10000; // Default 10km if not available
-    const rain = weatherData.rain ? weatherData.rain['1h'] || 0 : 0;
+    const humidity = data.current.relative_humidity_2m;
+    const temp = data.current.temperature_2m;
+    const windSpeed = data.current.wind_speed_10m;
+    const rain = data.current.precipitation;
 
     // Advanced humidity analysis
     if (humidity > 85) {
@@ -371,48 +322,34 @@ const WeatherForecast = () => {
     if (windSpeed > 15) {
       newAlerts.push({
         title: "Peringatan: Angin Kencang",
-        description: `Kecepatan angin ${Math.round(windSpeed * 3.6)} km/h dapat merusak tanaman. Pastikan penyangga tanaman kuat dan lindungi tanaman muda.`,
+        description: `Kecepatan angin ${Math.round(windSpeed)} km/h dapat merusak tanaman. Pastikan penyangga tanaman kuat dan lindungi tanaman muda.`,
         type: "warning"
       });
     }
 
-    // Visibility and fog analysis
-    if (visibility < 1000) {
+    // Forecast-based alerts using hourly data
+    const next24Hours = data.hourly.precipitation_probability.slice(0, 24);
+    const rainHours = next24Hours.filter(prob => prob > 50).length;
+
+    if (rainHours >= 12) { // More than 12 hours of rain probability > 50%
       newAlerts.push({
-        title: "Kabut Tebal",
-        description: `Visibilitas rendah (${visibility}m) dapat mempengaruhi penyemprotan pestisida. Tunda aktivitas penyemprotan sampai visibilitas membaik.`,
-        type: "info"
+        title: "Prakiraan Hujan Berkepanjangan",
+        description: "Diprediksi hujan dalam 24 jam ke depan. Persiapkan lahan untuk mengurangi dampak genangan dan penyakit.",
+        type: "warning"
       });
     }
 
-    // Forecast-based alerts
-    if (forecastData && forecastData.list) {
-      const next24Hours = forecastData.list.slice(0, 8);
-      const rainForecast = next24Hours.filter(item =>
-        item.weather[0].main.toLowerCase().includes('rain') ||
-        (item.rain && item.rain['3h'] > 0.5)
-      );
+    // Temperature forecast analysis
+    const tempForecast = data.hourly.temperature_2m.slice(0, 24);
+    const minTemp = Math.min(...tempForecast);
+    const maxTemp = Math.max(...tempForecast);
 
-      if (rainForecast.length >= 4) { // More than 12 hours of rain
-        newAlerts.push({
-          title: "Prakiraan Hujan Berkepanjangan",
-          description: "Diprediksi hujan dalam 24 jam ke depan. Persiapkan lahan untuk mengurangi dampak genangan dan penyakit.",
-          type: "warning"
-        });
-      }
-
-      // Temperature forecast analysis
-      const tempForecast = next24Hours.map(item => item.main.temp);
-      const minTemp = Math.min(...tempForecast);
-      const maxTemp = Math.max(...tempForecast);
-
-      if (maxTemp - minTemp > 15) {
-        newAlerts.push({
-          title: "Fluktuasi Suhu Besar",
-          description: `Perbedaan suhu harian ${Math.round(maxTemp - minTemp)}°C dapat menyebabkan stres tanaman. Monitor kesehatan tanaman.`,
-          type: "info"
-        });
-      }
+    if (maxTemp - minTemp > 15) {
+      newAlerts.push({
+        title: "Fluktuasi Suhu Besar",
+        description: `Perbedaan suhu harian ${Math.round(maxTemp - minTemp)}°C dapat menyebabkan stres tanaman. Monitor kesehatan tanaman.`,
+        type: "info"
+      });
     }
 
     // Optimal conditions for agricultural activities
@@ -429,15 +366,6 @@ const WeatherForecast = () => {
         title: "Kondisi Ideal Penjemuran",
         description: "Cuaca sempurna untuk penjemuran panen, benih, dan pengeringan hasil pertanian.",
         type: "success"
-      });
-    }
-
-    // Pressure-based weather prediction
-    if (pressure < 1000) {
-      newAlerts.push({
-        title: "Tekanan Udara Rendah",
-        description: "Tekanan udara rendah menunjukkan potensi perubahan cuaca. Monitor perkembangan cuaca secara berkala.",
-        type: "info"
       });
     }
 
@@ -465,6 +393,33 @@ const WeatherForecast = () => {
             Informasi cuaca akurat untuk membantu perencanaan pertanian Anda
           </p>
         </div>
+
+        {/* Location Permission Notice */}
+        {locationError && (
+          <Card className="mb-8 border-yellow-200 bg-yellow-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-yellow-600" />
+                  <div>
+                    <p className="font-medium text-yellow-800">Izin Lokasi Diperlukan</p>
+                    <p className="text-sm text-yellow-700">
+                      Untuk mendapatkan cuaca real-time di lokasi Anda, izinkan akses lokasi di browser.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={requestLocationPermission}
+                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                >
+                  Izinkan Lokasi
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Current Conditions */}
         <Card className="mb-8 bg-gradient-to-br from-accent/10 to-primary/10 border-accent/20">

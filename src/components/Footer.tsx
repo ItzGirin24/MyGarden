@@ -52,7 +52,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 MyGarden | Platform Pendukung Petani Indonesia.</p>
+          <p>&copy; 2025 MyGarden | Platform Pendukung Petani Indonesia.</p>
         </div>
       </div>
     </footer>

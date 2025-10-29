@@ -71,6 +71,45 @@ export type Database = {
         }
         Relationships: []
       }
+      market_prices: {
+        Row: {
+          commodity_name: string
+          created_at: string | null
+          id: string
+          latitude: number | null
+          location: string
+          longitude: number | null
+          price: number
+          unit: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          commodity_name: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          price: number
+          unit?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          commodity_name?: string
+          created_at?: string | null
+          id?: string
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          price?: number
+          unit?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

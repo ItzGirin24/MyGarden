@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PhotoPriceChecker from "@/components/PhotoPriceChecker";
 
 const MarketPrices = () => {
   const { toast } = useToast();
@@ -193,9 +194,10 @@ const MarketPrices = () => {
 
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <Tabs defaultValue="commodities" className="w-full max-w-md">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="commodities">Harga Jual Komoditas</TabsTrigger>
               <TabsTrigger value="inputs">Sarana Produksi</TabsTrigger>
+              <TabsTrigger value="photo">Cek via Foto</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -367,8 +369,8 @@ const MarketPrices = () => {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="date" className="text-xs" />
                     <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
+                    <Tooltip
+                      contentStyle={{
                         backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
@@ -436,6 +438,10 @@ const MarketPrices = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="photo" className="space-y-6">
+            <PhotoPriceChecker />
           </TabsContent>
         </Tabs>
       </div>
