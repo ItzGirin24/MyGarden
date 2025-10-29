@@ -68,9 +68,11 @@ export const analyzeImage = async (file: File): Promise<{
 Common Indonesian agricultural commodities: padi (rice), jagung (corn), cabai (chili), bawang merah (shallot), tomat (tomato), kentang (potato), kubis (cabbage), wortel (carrot), dll.
 
 IMPORTANT: Estimate the weight of the product shown in the image. For example:
-- If you see a sack/bag of rice, estimate it might be 50kg, 25kg, or 10kg based on size
-- If you see loose produce, estimate based on visible quantity
+- If you see a regular sack/bag (karungan biasa) of agricultural products like rice, corn, etc., estimate around 50kg (not 500kg)
+- If you see smaller sacks/bags, estimate 25kg or 10kg based on size
+- If you see loose produce, estimate based on visible quantity (e.g., a handful might be 1-2kg, a pile might be 5-10kg)
 - If you see packaged goods, estimate based on standard packaging sizes
+- For large industrial sacks, estimate 50-100kg maximum
 
 Calculate totalPrice by multiplying estimatedPrice by estimatedWeight.amount.
 
