@@ -7,6 +7,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
 
@@ -50,6 +51,11 @@ const Navigation = () => {
     { label: "Berita", href: "/news", icon: Newspaper },
     { label: "Chat AI", href: "/chat", icon: MessageCircle },
   ];
+
+  // Filter nav items based on search query
+  const filteredNavItems = navItems.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -96,8 +102,39 @@ const Navigation = () => {
                   <input
                     type="text"
                     placeholder="Cari fitur atau informasi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-3 py-2 text-sm sm:text-base border border-green-300 dark:border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
                   />
+                  {searchQuery && filteredNavItems.length > 0 && (
+                    <div className="mt-2 max-h-48 overflow-y-auto">
+                      {filteredNavItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.href;
+                        return (
+                          <Link
+                            key={item.label}
+                            to={item.href}
+                            onClick={() => {
+                              setShowSearch(false);
+                              setSearchQuery("");
+                            }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors ${
+                              isActive ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200" : ""
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {searchQuery && filteredNavItems.length === 0 && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Tidak ada hasil ditemukan
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -161,14 +198,14 @@ const Navigation = () => {
                   <input
                     type="text"
                     placeholder="Cari fitur atau informasi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-green-300 dark:border-green-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white text-sm"
                   />
                 </div>
               </div>
 
-
-
-              {navItems.map((item, index) => {
+              {filteredNavItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 return (
