@@ -7,7 +7,7 @@ import { Bot, Send, User, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getAIResponse } from "@/lib/groq";
+import { getAIResponse } from "@/lib/gemini";
 
 const AIChat = () => {
   const [messages, setMessages] = useState([
@@ -134,7 +134,7 @@ const AIChat = () => {
 
     } catch (error) {
       console.error('Error processing message:', error);
-      const errorMessage = "Maaf, terjadi kesalahan saat memproses pertanyaan Anda. Pastikan API key Groq sudah dikonfigurasi dengan benar.";
+      const errorMessage = "Maaf, terjadi kesalahan saat memproses pertanyaan Anda. Pastikan API key Gemini sudah dikonfigurasi dengan benar.";
 
       const messagesWithError = [
         ...newMessages,
@@ -144,7 +144,7 @@ const AIChat = () => {
 
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please check your Groq API key configuration.",
+        description: "Failed to get AI response. Please check your Gemini API key configuration.",
         variant: "destructive",
       });
     } finally {
