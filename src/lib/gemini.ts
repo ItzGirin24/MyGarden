@@ -65,7 +65,7 @@ class RateLimiter {
 
 const rateLimiter = new RateLimiter(10, 60000); // 10 requests per minute
 
-export const getAIResponse = async (message: string): Promise<string> => {
+export const getAIResponse = async (message: string, userName?: string): Promise<string> => {
   try {
     const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
@@ -80,6 +80,9 @@ export const getAIResponse = async (message: string): Promise<string> => {
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       try {
+        const userContext = userName ? `Anda sedang berbicara dengan ${userName}.` : '';
+        const prompt = `You are MyGardenAssisten, a friendly and interactive AI assistant specializing in agriculture and gardening. Respond in Indonesian naturally, like you're chatting with a friend. Be direct, conversational, and to the point - no markdown formatting, no bold text, no asterisks. Keep responses engaging but concise. ${userContext} User question: ${message}`;
+
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
           {
@@ -91,9 +94,9 @@ export const getAIResponse = async (message: string): Promise<string> => {
               contents: [
                 {
                   parts: [
-                  {
-                    text: `You are MyGardenAssisten, a friendly and interactive AI assistant specializing in agriculture and gardening. Respond in Indonesian naturally, like you're chatting with a friend. Be direct, conversational, and to the point - no markdown formatting, no bold text, no asterisks. Keep responses engaging but concise. User question: ${message}`,
-                  },
+                    {
+                      text: prompt,
+                    },
                   ],
                 },
               ],

@@ -29,8 +29,24 @@ const AIChat = () => {
     return unsubscribe;
   }, []);
 
-  // Load chat history on mount and when user changes
+  // Load messages from localStorage immediately on mount and user change
   useEffect(() => {
+    const userId = currentUser?.uid || 'anonymous';
+    const savedMessages = localStorage.getItem(`chat_messages_${userId}`);
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          setIsLoadingHistory(false); // Stop loading since we have localStorage data
+          return; // Don't load from database if we have localStorage data
+        }
+      } catch (error) {
+        console.error('Error loading messages from localStorage:', error);
+      }
+    }
+
+    // If no localStorage data, load from database
     loadChatHistory();
   }, [currentUser]);
 
@@ -41,22 +57,6 @@ const AIChat = () => {
       localStorage.setItem(`chat_messages_${userId}`, JSON.stringify(messages));
     }
   }, [messages, isLoadingHistory, currentUser]);
-
-  // Load messages from localStorage on mount (as backup to database)
-  useEffect(() => {
-    const userId = currentUser?.uid || 'anonymous';
-    const savedMessages = localStorage.getItem(`chat_messages_${userId}`);
-    if (savedMessages && isLoadingHistory) {
-      try {
-        const parsedMessages = JSON.parse(savedMessages);
-        if (parsedMessages.length > 0) {
-          setMessages(parsedMessages);
-        }
-      } catch (error) {
-        console.error('Error loading messages from localStorage:', error);
-      }
-    }
-  }, [currentUser, isLoadingHistory]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -194,7 +194,9 @@ const AIChat = () => {
     await saveMessage("user", userMessage);
 
     try {
-      const aiResponse = await getAIResponse(userMessage);
+      // Get user name for personalized responses
+      const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || null;
+      const aiResponse = await getAIResponse(userMessage, userName);
 
       // Check if response indicates rate limiting
       if (aiResponse.includes("Rate limit reached")) {
