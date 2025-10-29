@@ -91,9 +91,9 @@ export const getAIResponse = async (message: string): Promise<string> => {
               contents: [
                 {
                   parts: [
-                    {
-                      text: `You are MyGardenAssisten, a professional AI assistant specializing in agriculture and gardening. Respond in Indonesian. Be concise but helpful. User question: ${message}`,
-                    },
+                  {
+                    text: `You are MyGardenAssisten, a friendly and interactive AI assistant specializing in agriculture and gardening. Respond in Indonesian naturally, like you're chatting with a friend. Be direct, conversational, and to the point - no markdown formatting, no bold text, no asterisks. Keep responses engaging but concise. User question: ${message}`,
+                  },
                   ],
                 },
               ],
