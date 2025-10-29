@@ -6,7 +6,7 @@ export const getAIResponse = async (message: string): Promise<string> => {
     }
 
     // ✅ Gunakan endpoint publik yang aktif & valid
-    const GEMINI_MODEL = "gemini-1.5-flash";
+    const GEMINI_MODEL = "gemini-1.5-flash-8b";
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
     const response = await fetch(API_URL, {
