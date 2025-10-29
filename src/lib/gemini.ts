@@ -2,13 +2,17 @@ export const getAIResponse = async (message: string): Promise<string> => {
   try {
     const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
-      throw new Error('Gemini API key not configured');
+      throw new Error("Gemini API key not configured");
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
+    // ✅ Gunakan endpoint publik yang aktif & valid
+    const GEMINI_MODEL = "gemini-1.5-flash";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+    const response = await fetch(API_URL, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         contents: [
@@ -17,74 +21,101 @@ export const getAIResponse = async (message: string): Promise<string> => {
               {
                 text: `You are MyGardenAssisten, a professional AI assistant specializing in agriculture and gardening. Respond in Indonesian with professional, structured, and interactive language. Use emojis appropriately, format information with bullet points, numbered lists, and bold text for clarity. Provide practical, evidence-based advice. Structure responses with clear sections when appropriate. Be helpful, accurate, and engaging.
 
-User question: ${message}`
-              }
-            ]
-          }
+User question: ${message}`,
+              },
+            ],
+          },
         ],
         generationConfig: {
           temperature: 0.7,
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 1024,
-        }
-      })
+        },
+      }),
     });
 
+    // 🔍 Tambahkan log error yang informatif
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API Error:', {
+      console.error("Gemini API Error:", {
         status: response.status,
         statusText: response.statusText,
-        error: errorText
+        error: errorText,
       });
+
+      // Jika model tidak ditemukan
+      if (response.status === 404) {
+        throw new Error(
+          "Model tidak ditemukan. Pastikan model menggunakan 'gemini-1.5-flash' atau 'gemini-1.5-flash-8b'."
+        );
+      }
+
+      // Jika rate limit
+      if (response.status === 429) {
+        throw new Error(
+          "Terlalu banyak permintaan ke Gemini API. Silakan tunggu beberapa saat dan coba lagi."
+        );
+      }
+
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
 
-    if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-      return data.candidates[0].content.parts[0].text.trim();
-    }
+    // ✅ Ambil hasil AI jika ada
+    const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (textResponse) return textResponse;
 
     return "Maaf, saya tidak dapat memproses pertanyaan Anda saat ini. Silakan coba lagi.";
   } catch (error) {
-    console.error('Error calling Gemini API:', error);
+    console.error("Error calling Gemini API:", error);
 
-    // Enhanced rule-based responses with more intelligence
+    // ===== Fallback intelligent responses =====
     const lowerMessage = message.toLowerCase();
 
-    // Advanced pattern matching for agricultural questions
-    if ((lowerMessage.includes('jagung') || lowerMessage.includes('corn')) &&
-        (lowerMessage.includes('tanam') || lowerMessage.includes('plant'))) {
-      return "Untuk menanam jagung di Indonesia, perhatikan hal berikut:\n\n🌱 **Waktu Tanam Optimal:**\n- Musim hujan: Oktober-Februari\n- Musim kemarau: April-Juni\n\n🌿 **Persiapan Tanah:**\n- pH tanah: 5.5-7.0\n- Drainase baik, hindari genangan\n- Tambahkan pupuk kandang 2-3 ton/ha\n\n📏 **Jarak Tanam:**\n- 75cm antar baris\n- 25cm antar tanaman\n- Kedalaman: 3-5cm\n\n💧 **Irigasi:**\n- Fase vegetatif: 2-3 hari sekali\n- Fase generatif: setiap hari\n\nPilih varietas unggul seperti Bisi-2 atau NK-33 untuk hasil maksimal.";
+    if (
+      (lowerMessage.includes("jagung") || lowerMessage.includes("corn")) &&
+      (lowerMessage.includes("tanam") || lowerMessage.includes("plant"))
+    ) {
+      return "🌽 **Panduan Menanam Jagung di Indonesia:**\n\n🌦️ **Waktu Tanam Optimal:** Musim hujan (Okt–Feb) atau awal kemarau (Apr–Jun)\n🌿 **Persiapan Tanah:** pH 5.5–7.0, drainase baik, pupuk kandang 2–3 ton/ha\n📏 **Jarak Tanam:** 75×25cm, kedalaman 3–5cm\n💧 **Irigasi:** vegetatif 2–3 hari sekali, generatif tiap hari\n\nVarietas unggul: Bisi-2, NK-33.";
     }
 
-    if ((lowerMessage.includes('harga') || lowerMessage.includes('price')) &&
-        (lowerMessage.includes('cabai') || lowerMessage.includes('chili'))) {
-      return "Informasi harga cabai di Indonesia (perkiraan):\n\n🌶️ **Cabai Merah Besar:**\n- Jakarta: Rp 25.000-45.000/kg\n- Surabaya: Rp 30.000-50.000/kg\n- Bandung: Rp 28.000-48.000/kg\n\n🌶️ **Cabai Rawit:**\n- Jakarta: Rp 35.000-55.000/kg\n- Surabaya: Rp 40.000-60.000/kg\n- Bandung: Rp 38.000-58.000/kg\n\n📈 **Faktor yang Mempengaruhi Harga:**\n- Musim panen\n- Kondisi cuaca\n- Permintaan pasar\n- Biaya transportasi\n\n💡 **Tips untuk Petani:**\n- Panen saat harga tinggi\n- Diversifikasi komoditas\n- Manfaatkan program asuransi pertanian";
+    if (
+      (lowerMessage.includes("harga") || lowerMessage.includes("price")) &&
+      (lowerMessage.includes("cabai") || lowerMessage.includes("chili"))
+    ) {
+      return "🌶️ **Harga Cabai Terkini (perkiraan):**\n- Jakarta: Rp25–45 ribu/kg\n- Surabaya: Rp30–50 ribu/kg\n- Bandung: Rp28–48 ribu/kg\n\n📈 **Faktor:** musim, cuaca, permintaan pasar, transportasi.";
     }
 
-    if ((lowerMessage.includes('hama') || lowerMessage.includes('pest')) &&
-        (lowerMessage.includes('padi') || lowerMessage.includes('rice'))) {
-      return "Pengendalian hama wereng pada padi:\n\n🐛 **Identifikasi Hama:**\n- Wereng coklat: tubuh coklat, sayap transparan\n- Wereng hijau: tubuh hijau, aktif siang hari\n- Wereng putih: tubuh putih kekuningan\n\n🛡️ **Strategi Pengendalian:**\n\n1. **Pengendalian Kultur Teknis:**\n   - Sistem tanam legowo 2:1\n   - Penggunaan varietas tahan (Inpari-32, Ciherang)\n   - Pengaturan populasi tanaman\n\n2. **Pengendalian Hayati:**\n   - Lepaskan parasitoid Anagrus spp.\n   - Gunakan jamur Metarhizium anisopliae\n   - Dorong populasi predator alami\n\n3. **Pengendalian Kimiawi:**\n   - Insektisida sistemik (imidakloprid)\n   - Insektisida kontak (lambda-sihalotrin)\n   - Aplikasi tepat waktu saat populasi ≤ 5 ekor/tanaman\n\n📊 **Ambang Pengendalian:**\n- Wereng coklat: 25 ekor/tanaman\n- Wereng hijau: 50 ekor/tanaman\n\n⚠️ **Pencegahan:**\n- Rotasi tanaman\n- Pembersihan lahan\n- Pemupukan berimbang";
+    if (
+      (lowerMessage.includes("hama") || lowerMessage.includes("pest")) &&
+      (lowerMessage.includes("padi") || lowerMessage.includes("rice"))
+    ) {
+      return "🐛 **Hama Wereng Padi:**\n- Jenis: coklat, hijau, putih\n- Pengendalian: tanam legowo, varietas tahan, insektisida sistemik & hayati.\n- Ambang kendali: >25 ekor/tanaman.";
     }
 
-    if (lowerMessage.includes('cuaca') || lowerMessage.includes('weather') ||
-        lowerMessage.includes('prakiraan') || lowerMessage.includes('forecast')) {
-      return "Informasi cuaca untuk pertanian di Indonesia:\n\n🌧️ **Musim Hujan (Oktober-Maret):**\n- Curah hujan tinggi: 200-400mm/bulan\n- Kelembaban udara: 70-90%\n- Suhu: 25-32°C\n- Cocok untuk: Padi, jagung, kedelai\n\n☀️ **Musim Kemarau (April-September):**\n- Curah hujan rendah: 50-150mm/bulan\n- Kelembaban udara: 60-80%\n- Suhu: 28-35°C\n- Cocok untuk: Kacang tanah, ubi kayu, cabai\n\n📱 **Sumber Informasi Cuaca:**\n- BMKG (Badan Meteorologi Klimatologi Geofisika)\n- Aplikasi: Info BMKG, Cuaca Indonesia\n- Website: bmkg.go.id\n\n💡 **Tips Memanfaatkan Cuaca:**\n- Tanam sesuai musim untuk hasil optimal\n- Gunakan sistem irigasi saat kemarau\n- Persiapkan drainase saat hujan\n- Monitor prakiraan cuaca harian";
+    if (
+      lowerMessage.includes("cuaca") ||
+      lowerMessage.includes("weather") ||
+      lowerMessage.includes("prakiraan")
+    ) {
+      return "🌦️ **Musim Hujan (Okt–Mar):** 200–400mm/bulan, cocok padi & jagung.\n☀️ **Musim Kemarau (Apr–Sep):** 50–150mm/bulan, cocok cabai & kacang tanah.";
     }
 
-    if (lowerMessage.includes('pupuk') || lowerMessage.includes('fertilizer')) {
-      return "Panduan pemupukan untuk tanaman:\n\n🌱 **Jenis Pupuk:**\n\n1. **Pupuk Organik:**\n   - Kompos: 2-3 ton/ha\n   - Pupuk kandang: 1-2 ton/ha\n   - Keunggulan: Meningkatkan struktur tanah\n\n2. **Pupuk Anorganik:**\n   - Urea (N): 200-300 kg/ha\n   - SP-36 (P): 100-150 kg/ha\n   - KCl (K): 100-200 kg/ha\n\n📅 **Waktu Pemupukan:**\n- Basal: Saat tanam (50%)\n- Susulan: 2-4 minggu setelah tanam (25%)\n- Top dressing: Saat pembungaan (25%)\n\n🧪 **Analisis Tanah:**\n- Lakukan tes pH tanah\n- Uji kandungan hara\n- Sesuaikan dosis berdasarkan hasil\n\n💡 **Tips Efektif:**\n- Jangan berlebihan (dapat merusak tanah)\n- Kombinasikan organik + anorganik\n- Perhatikan kondisi cuaca saat pemupukan";
+    if (lowerMessage.includes("pupuk") || lowerMessage.includes("fertilizer")) {
+      return "🧪 **Panduan Pemupukan:**\n- Organik: 2–3 ton/ha\n- Urea: 200–300 kg/ha\n- SP-36: 100–150 kg/ha\n- KCl: 100–200 kg/ha\n\n⏱️ **Waktu:** tanam (50%), susulan (25%), pembungaan (25%).";
     }
 
-    if (lowerMessage.includes('irigasi') || lowerMessage.includes('watering') ||
-        lowerMessage.includes('pengairan')) {
-      return "Sistem irigasi yang efisien untuk pertanian:\n\n💧 **Jenis Sistem Irigasi:**\n\n1. **Irigasi Permukaan:**\n   - Banjir: Sederhana, cocok padi\n   - Alur: Efisien air, cocok jagung\n   - Ciprat: Hemat air, cocok sayuran\n\n2. **Irigasi Bawah Permukaan:**\n   - Drip irrigation: Presisi tinggi\n   - Sprinkler: Seragam, cocok lahan luas\n   - Pivot: Otomatis, efisien\n\n📏 **Kebutuhan Air Tanaman:**\n- Padi: 1.200-1.500 mm/musim\n- Jagung: 500-800 mm/musim\n- Cabai: 600-800 mm/musim\n\n⏰ **Jadwal Irigasi:**\n- Pagi hari: 05.00-08.00\n- Sore hari: 16.00-18.00\n- Hindari siang hari (penguapan tinggi)\n\n💡 **Teknologi Modern:**\n- Sensor kelembaban tanah\n- Irigasi otomatis\n- Aplikasi monitoring cuaca\n\n⚠️ **Masalah Umum:**\n- Genangan air berlebih\n- Kekeringan ekstrem\n- Kualitas air buruk";
+    if (
+      lowerMessage.includes("irigasi") ||
+      lowerMessage.includes("watering") ||
+      lowerMessage.includes("pengairan")
+    ) {
+      return "💧 **Sistem Irigasi:**\n- Permukaan: cocok padi\n- Drip: efisien untuk sayur\n- Sprinkler: lahan luas\n\n📏 Kebutuhan air: padi 1200–1500 mm/musim, cabai 600–800 mm/musim.";
     }
 
-    // General agricultural assistant response
-    return "**MyGardenAssisten - Asisten AI Pertanian Profesional**\n\nSelamat datang! Saya siap membantu Anda dengan berbagai aspek pertanian dan berkebun.\n\n🌾 **Layanan yang Tersedia:**\n\n**Budidaya Tanaman:**\n• Waktu tanam optimal berdasarkan musim\n• Teknik penanaman yang efisien\n• Perawatan tanaman komprehensif\n\n**Pengendalian Hama & Penyakit:**\n• Identifikasi hama penyakit yang akurat\n• Strategi pengendalian terintegrasi\n• Metode pencegahan efektif\n\n**Informasi Pasar:**\n• Analisis harga komoditas terkini\n• Tren pasar dan proyeksi\n• Strategi pemasaran optimal\n\n**Cuaca & Iklim:**\n• Prakiraan cuaca terkini\n• Dampak perubahan iklim\n• Rekomendasi adaptasi\n\n**Pupuk & Irigasi:**\n• Panduan pemupukan berimbang\n• Sistem irigasi efisien\n• Konservasi sumber daya air\n\nSilakan ajukan pertanyaan spesifik tentang pertanian, dan saya akan berikan rekomendasi praktis berdasarkan praktik pertanian modern dan berkelanjutan.";
+    // Default fallback
+    return "🌾 **MyGardenAssisten** siap membantu pertanian & berkebun Anda!\n\nTanyakan tentang tanaman, cuaca, hama, pupuk, atau harga pasar untuk rekomendasi berbasis praktik terbaik pertanian modern.";
   }
 };
