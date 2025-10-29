@@ -1,10 +1,12 @@
-# TODO: Make Search Icon Functional in Header
+# TODO: Add Photo Functionality to Market Page
 
 ## Tasks
-- [x] Add searchQuery state to Navigation component
-- [x] Add onChange handlers for desktop and mobile search inputs
-- [x] Implement filtering logic for navItems based on searchQuery (case insensitive)
-- [x] Update desktop search dropdown to display filtered navigation items as clickable links
-- [x] Update mobile menu to filter displayed navigation items based on searchQuery
-- [x] Add logic to close search and clear query when clicking a filtered item
-- [ ] Test search functionality on both desktop and mobile views
+- [ ] Update Supabase types to include market_prices table
+- [ ] Create PhotoPriceChecker component for photo upload and analysis
+- [ ] Add camera/photo upload button to MarketPrices component
+- [ ] Implement image upload to Supabase storage
+- [ ] Integrate Gemini AI for commodity identification from photos
+- [ ] Display detailed price information (buying/selling prices)
+- [ ] Store photo analysis results in market_price_checks table
+- [ ] Add loading states and error handling
+- [ ] Test photo functionality and AI integration
