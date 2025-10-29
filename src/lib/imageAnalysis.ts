@@ -14,14 +14,14 @@ export const analyzeImage = async (file: File): Promise<{
 }> => {
   try {
     const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!GEMINI_API_KEY) {
-      throw new Error('Gemini API key not configured');
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+      throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in your .env file.');
     }
 
     // Convert file to base64
     const base64Data = await getFileAsBase64(file);
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +49,15 @@ export const analyzeImage = async (file: File): Promise<{
 
 Common Indonesian agricultural commodities: padi (rice), jagung (corn), cabai (chili), bawang merah (shallot), tomat (tomato), kentang (potato), kubis (cabbage), wortel (carrot), dll.
 
-Provide realistic market prices based on current Indonesian market conditions. Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
+Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Consider multiple factors:
+- Current season and harvest conditions
+- Regional price variations across Indonesia
+- Supply and demand dynamics
+- Transportation costs
+- Quality of the produce
+- Recent market trends and economic factors
+
+Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
               },
               {
                 inlineData: {
