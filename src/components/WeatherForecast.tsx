@@ -74,23 +74,46 @@ const WeatherForecast = () => {
             ...prev,
             location: "Izin lokasi ditolak. Menggunakan lokasi default."
           }));
-          // Fallback to Jakarta coordinates (more central for Indonesia)
-          fetchWeatherData(-6.2088, 106.8456);
+          // Fallback to current user's approximate location based on IP
+          // For Indonesia, use a more general fallback that tries to detect region
+          getLocationFromIP();
         },
         {
           enableHighAccuracy: true,
-          timeout: 15000, // Increased timeout for better accuracy
-          maximumAge: 600000 // 10 minutes cache
+          timeout: 20000, // Increased timeout for better accuracy
+          maximumAge: 300000 // 5 minutes cache
         }
       );
     } else {
       setLocationError(true);
       setCurrentWeather(prev => ({
         ...prev,
-        location: "Geolocation tidak didukung. Menggunakan Jakarta sebagai default."
+        location: "Geolocation tidak didukung. Menggunakan lokasi default."
       }));
-      fetchWeatherData(-6.2088, 106.8456);
+      getLocationFromIP();
     }
+  };
+
+  const getLocationFromIP = async () => {
+    try {
+      // Use a free IP geolocation service to get approximate location
+      const response = await fetch('https://ipapi.co/json/');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('IP-based location:', data);
+        const lat = parseFloat(data.latitude);
+        const lon = parseFloat(data.longitude);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          fetchWeatherData(lat, lon);
+          return;
+        }
+      }
+    } catch (error) {
+      console.log('IP geolocation failed, using default location');
+    }
+
+    // Final fallback - use Jakarta as default for Indonesia
+    fetchWeatherData(-6.2088, 106.8456);
   };
 
   const requestLocationPermission = () => {
