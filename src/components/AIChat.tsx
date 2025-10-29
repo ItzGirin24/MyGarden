@@ -12,14 +12,10 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
 const AIChat = () => {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content: "Selamat datang di Tani Cerdas! 🌾 Saya asisten AI Anda yang siap membantu dengan pertanyaan seputar pertanian. Silakan tanyakan tentang harga pasar, prakiraan cuaca, tips bercocok tanam, atau apa saja!"
-    }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const { toast } = useToast();
   const scrollAreaRef = useRef(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -32,10 +28,10 @@ const AIChat = () => {
     return unsubscribe;
   }, []);
 
-  // Load chat history on mount
+  // Load chat history on mount and when user changes
   useEffect(() => {
     loadChatHistory();
-  }, []);
+  }, [currentUser]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -49,6 +45,7 @@ const AIChat = () => {
 
   const loadChatHistory = async () => {
     try {
+      setIsLoadingHistory(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data, error } = await supabase
@@ -82,6 +79,13 @@ const AIChat = () => {
         description: "Failed to load chat history",
         variant: "destructive",
       });
+      // Set default message on error
+      setMessages([{
+        role: "assistant",
+        content: "Selamat datang di Tani Cerdas! 🌾 Saya asisten AI Anda yang siap membantu dengan pertanyaan seputar pertanian. Silakan tanyakan tentang harga pasar, prakiraan cuaca, tips bercocok tanam, atau apa saja!"
+      }]);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
