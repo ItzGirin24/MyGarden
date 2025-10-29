@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bot, Send, User, Loader2 } from "lucide-react";
+import { Bot, Send, User as UserIcon, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getAIResponse } from "@/lib/gemini";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 
 const AIChat = () => {
   const [messages, setMessages] = useState([
@@ -20,6 +22,15 @@ const AIChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const scrollAreaRef = useRef(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Listen to Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
 
   // Load chat history on mount
   useEffect(() => {
@@ -207,7 +218,15 @@ const AIChat = () => {
                       {message.role === "user" && (
                         <Avatar className="bg-secondary">
                           <AvatarFallback>
-                            <User className="w-5 h-5 text-secondary-foreground" />
+                            {currentUser?.photoURL ? (
+                              <img
+                                src={currentUser.photoURL}
+                                alt={currentUser.displayName || "User"}
+                                className="w-5 h-5 rounded-full"
+                              />
+                            ) : (
+                              <UserIcon className="w-5 h-5 text-secondary-foreground" />
+                            )}
                           </AvatarFallback>
                         </Avatar>
                       )}
