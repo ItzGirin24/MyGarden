@@ -13,7 +13,7 @@ const Footer = () => {
               <span className="font-bold text-xl text-foreground">MyGarden</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Platform pendukung petani Indonesia dengan informasi real-time dan AI cerdas.
+              Platform pendukung petani Indonesia dengan informasi terbaru dan AI cerdas.
             </p>
           </div>
 
@@ -21,10 +21,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Fitur</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#market" className="hover:text-primary transition-colors">Harga Pasar</a></li>
-              <li><a href="#weather" className="hover:text-primary transition-colors">Prakiraan Cuaca</a></li>
-              <li><a href="#news" className="hover:text-primary transition-colors">Berita Pertanian</a></li>
-              <li><a href="#chat" className="hover:text-primary transition-colors">AI Tani Cerdas</a></li>
+              <li><a href="/market" className="hover:text-primary transition-colors">Harga Pasar</a></li>
+              <li><a href="/weather" className="hover:text-primary transition-colors">Prakiraan Cuaca</a></li>
+              <li><a href="/news" className="hover:text-primary transition-colors">Berita Pertanian</a></li>
+              <li><a href="/chat" className="hover:text-primary transition-colors">AI Tani Cerdas</a></li>
             </ul>
           </div>
 
@@ -43,7 +43,7 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-foreground mb-4">Tentang Kami</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Tentang MyGarden</a></li>
+              <li><a href="/about" className="hover:text-primary transition-colors">Tentang MyGarden</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Kontak</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Kebijakan Privasi</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Syarat & Ketentuan</a></li>
