@@ -27,7 +27,7 @@ const About = () => {
     {
       name: "Ariq Aflaha",
       role: " Co-Founder & UI/UX Designer",
-      bio: "Memadukan visi artistik dengan keahlian teknis untuk menciptakan pengalaman pengguna yang intuitif dan indah. Filosofi desainnya berfokus pada aksesibilitas, keberlanjutan, dan inovasi yang berpusat pada pengguna dalam teknologi pertanian.",
+      bio: "Merancang Aplikasi Dan Mendesain Apps .",
       skills: ["UI/UX Design", "Animation", "User Research"],
       avatar: ariqPhoto,
       color: "from-purple-500 to-pink-500",
@@ -54,7 +54,7 @@ const About = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-green-700 dark:text-green-300 max-w-2xl mx-auto leading-relaxed">
-            Temui pikiran-pikiran berbakat di balik MyGarden - merevolusi pertanian melalui teknologi,
+             di balik MyGarden  merevolusi pertanian melalui teknologi,
             kreativitas, dan inovasi.
           </p>
 
