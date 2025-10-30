@@ -61,7 +61,7 @@ const About = () => {
           <div className="flex justify-center gap-4 mt-8">
             <div className="flex items-center gap-2 text-green-600 dark:text-green-400 animate-bounce">
               <Heart className="w-5 h-5" />
-              <span className="font-medium">Bersemangat</span>
+              <span className="font-medium">Gen Z Product</span>
             </div>
             <div className="flex items-center gap-2 text-green-600 dark:text-green-400 animate-bounce" style={{ animationDelay: '0.2s' }}>
               <Code className="w-5 h-5" />
