@@ -82,13 +82,20 @@ If the image shows compost or fertilizer, include the "ingredients" array with t
 
 Provide ACCURATE and CURRENT market prices based on the latest Indonesian market data as of 2024. Use realistic prices that reflect actual market conditions:
 
-For common commodities (examples):
+For agricultural commodities (examples):
 - Beras (Rice): Buy Rp 10,000-15,000/kg, Sell Rp 12,000-18,000/kg
 - Jagung (Corn): Buy Rp 4,000-6,000/kg, Sell Rp 5,000-8,000/kg
 - Cabai (Chili): Buy Rp 20,000-40,000/kg, Sell Rp 25,000-50,000/kg
 - Bawang Merah (Shallot): Buy Rp 15,000-25,000/kg, Sell Rp 18,000-30,000/kg
 - Kentang (Potato): Buy Rp 8,000-12,000/kg, Sell Rp 10,000-15,000/kg
 - Wortel (Carrot): Buy Rp 6,000-10,000/kg, Sell Rp 8,000-12,000/kg
+
+For fertilizers and agricultural inputs:
+- Pupuk Urea (subsidized/HET): Buy Rp 2,250/kg, Sell Rp 2,500-3,000/kg
+- Pupuk Urea (nonsubsidi/market): Buy Rp 5,500-7,000/kg, Sell Rp 6,000-8,000/kg
+- Pupuk NPK: Buy Rp 3,000-5,000/kg, Sell Rp 4,000-6,000/kg
+- Pupuk ZA: Buy Rp 2,500-4,000/kg, Sell Rp 3,000-5,000/kg
+- Pupuk SP-36: Buy Rp 3,500-5,500/kg, Sell Rp 4,500-6,500/kg
 
 Consider multiple factors:
 - Current season and harvest conditions
@@ -98,7 +105,7 @@ Consider multiple factors:
 - Quality of the produce
 - Recent market trends and economic factors
 
-Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.
+Buy price should be lower than sell price. Market average should be between min and max range. Be conservative with confidence scores - only return high confidence (0.8+) if you're very sure about the identification.`
               },
               {
                 inlineData: {
@@ -141,11 +148,30 @@ Buy price should be lower than sell price. Market average should be between min 
     }
 
     // Ensure price ranges are reasonable for Indonesian agricultural market
-    const buyPrice = Math.max(2000, Math.min(150000, result.estimatedPrice.buy || 10000));
-    const sellPrice = Math.max(buyPrice + 2000, Math.min(200000, result.estimatedPrice.sell || 15000));
+    // Special handling for fertilizers vs agricultural commodities
+    let buyPrice = result.estimatedPrice.buy || 10000;
+    let sellPrice = result.estimatedPrice.sell || 15000;
+
+    // Check if this is fertilizer based on commodity name
+    const isFertilizer = result.commodity.toLowerCase().includes('pupuk') ||
+                        result.commodity.toLowerCase().includes('urea') ||
+                        result.commodity.toLowerCase().includes('npk') ||
+                        result.commodity.toLowerCase().includes('za') ||
+                        result.commodity.toLowerCase().includes('sp-36');
+
+    if (isFertilizer) {
+      // Fertilizer price ranges
+      buyPrice = Math.max(2000, Math.min(8000, buyPrice));
+      sellPrice = Math.max(buyPrice + 500, Math.min(10000, sellPrice));
+    } else {
+      // Agricultural commodity price ranges
+      buyPrice = Math.max(4000, Math.min(150000, buyPrice));
+      sellPrice = Math.max(buyPrice + 2000, Math.min(200000, sellPrice));
+    }
+
     const marketAvg = result.marketAverage || Math.round((buyPrice + sellPrice) / 2);
-    const minPrice = Math.max(1000, result.priceRange?.min || buyPrice - 5000);
-    const maxPrice = Math.max(sellPrice + 5000, result.priceRange?.max || sellPrice + 10000);
+    const minPrice = Math.max(1000, result.priceRange?.min || buyPrice - 2000);
+    const maxPrice = Math.max(sellPrice + 2000, result.priceRange?.max || sellPrice + 5000);
 
     // Calculate total prices if weight is estimated
     let totalPrice;
