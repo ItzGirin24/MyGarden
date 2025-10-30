@@ -55,8 +55,8 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
               Selamat Datang di MyGarden
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Platform komprehensif untuk petani Indonesia dengan informasi harga pasar real-time,
-              prakiraan cuaca akurat, berita pertanian terkini, dan asisten AI cerdas.
+              Platform Digital untuk petani Indonesia dengan informasi harga pasar terbaru,
+              perkiraan cuaca akurat, berita pertanian terkini, dan asisten AI cerdas.
             </CardDescription>
           </CardHeader>
           <CardContent>
