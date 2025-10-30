@@ -3,7 +3,7 @@ import { User, Heart, Code, Sparkles, Github, Mail, MapPin } from "lucide-react"
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import girinPhoto from "@/assets/Logo_GirinFix.webp"; // Path foto Girindhra
-import ariqPhoto from "@/assets/ariq.webp"
+import ariqPhoto from "@/assets/Ariq.webp"
 const About = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
