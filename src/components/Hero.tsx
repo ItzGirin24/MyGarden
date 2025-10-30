@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sprout, TrendingUp, Cloud, BookOpen } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-farm.jpg";
 
 const Hero = () => {
@@ -26,7 +27,7 @@ const Hero = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
             <span className="text-foreground">MyGarden</span>
             <br />
-            <span className="text-primary">KebunKu</span>
+            <span className="text-primary">Petani Sejahtera</span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
@@ -35,14 +36,18 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-4 mb-12">
-            <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
-              <Sprout className="w-5 h-5" />
-              Mulai Sekarang
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <BookOpen className="w-5 h-5" />
-              Pelajari Lebih Lanjut
-            </Button>
+            <Link to="/about">
+              <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
+                <Sprout className="w-5 h-5" />
+                Mulai Sekarang
+              </Button>
+            </Link>
+            <Link to="/about">
+              <Button size="lg" variant="outline" className="gap-2">
+                <BookOpen className="w-5 h-5" />
+                Pelajari Lebih Lanjut
+              </Button>
+            </Link>
           </div>
 
           {/* Feature Highlights */}
