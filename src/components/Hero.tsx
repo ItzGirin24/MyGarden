@@ -31,7 +31,7 @@ const Hero = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-            Informasi harga pasar real-time, prakiraan cuaca akurat, dan asisten AI cerdas
+            Informasi harga pasar , prakiraan cuaca akurat, dan asisten AI cerdas
             untuk membantu petani Indonesia meraih hasil panen optimal.
           </p>
 
@@ -58,7 +58,7 @@ const Hero = () => {
               </div>
               <div>
                 <p className="font-semibold text-card-foreground">Harga Pasar</p>
-                <p className="text-sm text-muted-foreground">Data Real-Time</p>
+                <p className="text-sm text-muted-foreground">Data Terbaru</p>
               </div>
             </div>
 
@@ -68,7 +68,7 @@ const Hero = () => {
               </div>
               <div>
                 <p className="font-semibold text-card-foreground">Prakiraan Cuaca</p>
-                <p className="text-sm text-muted-foreground">7-14 Hari</p>
+                <p className="text-sm text-muted-foreground">7 Hari</p>
               </div>
             </div>
 
