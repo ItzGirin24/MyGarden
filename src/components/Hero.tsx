@@ -36,12 +36,12 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-4 mb-12">
-            <Link to="/about">
+           
               <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
                 <Sprout className="w-5 h-5" />
                 Mulai Sekarang
               </Button>
-            </Link>
+
             <Link to="/about">
               <Button size="lg" variant="outline" className="gap-2">
                 <BookOpen className="w-5 h-5" />
